@@ -20,16 +20,36 @@ var q1=[
             'Limit Buy- User',
             'Double Sided Order',
             'Limit Buy - Best Bid',
-            'Limit Sell - Best Ask'
+            'Limit Sell - Best Ask',
+            'exit'
         ]
     },
     {
         type: 'confirm',
         name: 'loop',
-        message: 'Enter to go back',
-        default: true
-      }
-];
+        message: 'Enter to go back'
+    },
+    {when: function(response){
+        if(response.loop){console.log('f')}
+        else{
+            console.log(chalk.cyan('Good Bye 👋\n'));
+            process.exit();
+            }
+        },
+    }
+    //       type: 'input',
+    //       name: 'back',
+    //       message: 'go back?'
+    //   }
+    //   , {when: function(response){
+    //         if(response.back==='y'){console.log('f')}
+    //         else{
+    //             console.log(chalk.cyan('Good Bye 👋\n'));
+    //             process.exit();
+    //             }
+    //         }
+    //     }
+]
 
 var questions =[
     {
@@ -74,25 +94,36 @@ function setLimitBuy()
 //recursive function
 function ask() {
     
-    inquirer.prompt(q1).then(answers => {
-        // if(answers.choice ==='Limit Buy- User')
-        // {
-        //     setLimitBuy();
-        // }
-  
-        //loop
-        if (answers.loop) {
+    // inquirer.prompt(q1).then(answers => {
+    //     //loop
+    //     if(answers.choice ==='Limit Buy- User') {
+    //         console.log('---');
+    //     }
+    //     if(answers.choice ==='exit') {
+    //         console.log(chalk.cyan('Good Bye 👋\n'))
+    //         process.exit();
+    //     }
+    //     if (answers.loop) {
+    //         ask();
+    //         if(answers.choice==='Limit Buy- User')
+    //         {
+    //             console.log(chalk.yellow('here'));
+    //         }
+    //     }
+    //     else {
+    //         console.log(chalk.cyan('Good Bye 👋\n'));
+    //     }
+    // });
+
+    inquirer.prompt(q1).then(answers =>{
+        console.log(answers);
+        if(answers.loop){
             ask();
-            if(answers.choice==='Limit Buy- User')
-            {
-                console.log(chalk.yellow('===price===='));
-                setLimitBuy(); 
-                console.log(output);
-            }
-        } else {
+        }
+        else{
             console.log(chalk.cyan('Good Bye 👋\n'));
         }
-    });
+    })
   }
   
   ask();

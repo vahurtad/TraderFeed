@@ -4,7 +4,7 @@
  */
 
 'use strict';
-import * as inquirer from 'inquirer'
+import * as inquirer from 'inquirer';
 var output = [];
 
 var questions = [

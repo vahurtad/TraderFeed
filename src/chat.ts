@@ -1,7 +1,7 @@
 // run with `node infinite.js` in node v4.x+
 // must have Inquirer installed (`npm install inquirer`)
 
-const inquirer = require('inquirer');
+import * as inquirer from 'inquirer';
 const Rx = require('rx');
 var output=[];
 
