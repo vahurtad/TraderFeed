@@ -6,10 +6,11 @@ import { GDAXConfig } from 'gdaxtt2/build/src/exchanges/gdax/GDAXInterfaces';
 import { GDAXFeedConfig, GDAXExchangeAPI, GDAX_WS_FEED, GDAX_API_URL, GDAXFeed, ExchangeFeed } from 'gdaxtt2/build/src/exchanges';
 import { LiveOrder, BookBuilder } from 'gdaxtt2/build/src/lib';
 
-
+const Rx = require('rx');
+const prompts = new Rx.Subject();
 var input = process.stdin;
 input.setEncoding('utf-8'); 
-var output=[];
+
 
 var q1=[
     {
@@ -23,32 +24,53 @@ var q1=[
             'Limit Sell - Best Ask',
             'exit'
         ]
+    },{when: function(response){
+        ask:['price','size','target','stop']
+        if(response.choice==='Limit Buy- User'){
+            var output=[];
+            var asking = [{
+                    type: 'input',
+                    name: 'price',
+                    message: 'price', 
+                },
+                {
+                    type: 'input',
+                    name: 'size',
+                    message: 'size', 
+                },
+                {
+                    type: 'input',
+                    name: 'target',
+                    message: 'target', 
+                },
+                {
+                    type: 'input',
+                    name: 'stop',
+                    message: 'stop', 
+                }
+            
+            ];
+        
+        }
+        else if(response.choice==='Double Sided Order'){console.log('Double Sided Order')}
+        else if(response.choice==='Limit Buy - Best Bid'){console.log('Limit Buy - Best Bid')}
+        else if(response.choice==='Limit Sell - Best Ask'){console.log('Limit Sell - Best Ask')}
+        else{console.log(response.choice)}
+        }
     },
     {
-        type: 'confirm',
+        type: 'input',
         name: 'loop',
-        message: 'Enter to go back'
+        message: 'y to back, Enter to exit'
     },
     {when: function(response){
-        if(response.loop){console.log('f')}
-        else{
+        if(response.loop==='y'){console.log(chalk.red('going back 👈\n'))}
+        else if(response.loop==='n'){
             console.log(chalk.cyan('Good Bye 👋\n'));
             process.exit();
             }
         },
     }
-    //       type: 'input',
-    //       name: 'back',
-    //       message: 'go back?'
-    //   }
-    //   , {when: function(response){
-    //         if(response.back==='y'){console.log('f')}
-    //         else{
-    //             console.log(chalk.cyan('Good Bye 👋\n'));
-    //             process.exit();
-    //             }
-    //         }
-    //     }
 ]
 
 var questions =[
@@ -80,44 +102,43 @@ const gdax = new GDAXExchangeAPI(gdaxConfig);
  set pice and size
  call double-sided order with target and stop
  */
-function setLimitBuy()
+function getLimitBuy()
 {
-  inquirer.prompt([{
-    type: 'input',
-    name: 'limit_buy',
-    message: 'price'
-  },
+    var output=[];
+    var asking = ['price','size','target','stop'];
 
-])
+    let i = 0;
+    inquirer.prompt(prompts).ui.process.subscribe(({ answer }) => {
+        output.push(answer);      
+    }, (err) => {
+    console.warn(err);
+    }, () => {
+    console.log('Answer:', output);
+    });
+
+    while(i<asking.length){
+        prompts.onNext(makePrompt(asking[i]));
+        i+=1;   
+    }
+    prompts.onCompleted();  
+}
+
+function makePrompt(msg) {
+    return {
+      type: 'input',
+      name: `lb${msg}`,
+      message: `${msg}\n\n`,
+    };
 }
 
 //recursive function
 function ask() {
-    
-    // inquirer.prompt(q1).then(answers => {
-    //     //loop
-    //     if(answers.choice ==='Limit Buy- User') {
-    //         console.log('---');
-    //     }
-    //     if(answers.choice ==='exit') {
-    //         console.log(chalk.cyan('Good Bye 👋\n'))
-    //         process.exit();
-    //     }
-    //     if (answers.loop) {
-    //         ask();
-    //         if(answers.choice==='Limit Buy- User')
-    //         {
-    //             console.log(chalk.yellow('here'));
-    //         }
-    //     }
-    //     else {
-    //         console.log(chalk.cyan('Good Bye 👋\n'));
-    //     }
-    // });
-
     inquirer.prompt(q1).then(answers =>{
-        console.log(answers);
-        if(answers.loop){
+        // if(answers.choice ==='exit') {
+        //     console.log(chalk.cyan('Good Bye 👋\n'))
+        //     process.exit();
+        // }
+        if(answers.loop==='y'){
             ask();
         }
         else{
@@ -125,5 +146,4 @@ function ask() {
         }
     })
   }
-  
   ask();
