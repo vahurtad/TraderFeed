@@ -1,54 +1,55 @@
-var inquirer = require("inquirer");
+var inquirer = require('inquirer');
+
+function processAnswers(answers){
+  console.log("And your answers are:", answers);
+}
+function validateAge(age)
+{
  
-var preguntas = [
-    {
-      type: 'input',
-      name: 'nombre',
-      message: 'Nombre Completo?',
-      default: 'Jose Perez'
-    },
-    { type: 'confirm',
-      name: 'casado',
-      message: 'Casado?',
-    },
-    { when: function (response) {
-        return response.casado;
-      },
-      type: 'input',
-      name: 'hijos',
-      message: 'Número de hijos?',
-    },
-    {
-    type: "list",
-    name: "estudios",
-    message: "Nivel academico?",
-    choices: [
-      "Primaria",
-      "Secundaria",
-      new inquirer.Separator(),
-      "Bachillerato",
-      "Licenciatura",
-      "Doctorado"
-     ]
-    },
-    {
-    type: "checkbox",
-    message: "Servicios Publicos",
-    name: "servicios",
-    choices: [
-      {
-        name: "Agua",
-        checked: true
-      },
-      {
-        name: "Luz"
-      },
-      {
-        name: "Internet"
-      },
-      ],
-    }
-    ];
-inquirer.prompt(preguntas, function(respuestas) {
-  console.log(respuestas);
-});
+  var reg = /^\d+$/;
+   return reg.test(age) || "Age should be a number!";
+}
+
+function validateName(name){
+        return name !== '';
+    };
+
+var ageQ = {
+      message: "What's your age?",
+      type: "input",
+      name: "age",
+      validate: validateAge
+  };
+var feedbackQ= {
+    message: "How would you rate us?",
+    type: "rawlist",
+    name: "feedback",
+    choices:["Awesome", "Good", "Okay", "You suck" ]
+};
+var treatQ = {
+  when : function( answers ) {
+    return answers.feedback === "Awesome";
+  },
+  message: "Thank you soo much! You are Awesome too...",
+  type: "list",
+  name: "treat",
+  choices: ["Magnet&Stickers","T-Shirt", "Mug"],
+ 
+  default: "T-Shirt"
+};  
+
+var questions = [
+{
+    message: "What's your first name?",
+    type: "input",
+    name: "firstName",
+    validate: validateName
+},{
+    message: "What's your last name?",
+    type: "input",
+    name: "lastName",
+    validate: validateName
+},ageQ,feedbackQ,treatQ
+
+];
+inquirer.prompt(questions).then(processAnswers);

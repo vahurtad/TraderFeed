@@ -11,6 +11,18 @@ const prompts = new Rx.Subject();
 var input = process.stdin;
 input.setEncoding('utf-8'); 
 
+var questions =[
+    {
+        type: 'input',
+        name: 'buy_price',
+        message:'Price'
+      },
+      {
+        type: 'input',
+        name: 'buy_size',
+        message:'Size'  
+      }
+];
 
 var q1=[
     {
@@ -23,41 +35,23 @@ var q1=[
             'Limit Buy - Best Bid',
             'Limit Sell - Best Ask',
             'exit'
-        ]
-    },{when: function(response){
-        ask:['price','size','target','stop']
-        if(response.choice==='Limit Buy- User'){
-            var output=[];
-            var asking = [{
-                    type: 'input',
-                    name: 'price',
-                    message: 'price', 
-                },
-                {
-                    type: 'input',
-                    name: 'size',
-                    message: 'size', 
-                },
-                {
-                    type: 'input',
-                    name: 'target',
-                    message: 'target', 
-                },
-                {
-                    type: 'input',
-                    name: 'stop',
-                    message: 'stop', 
-                }
-            
-            ];
-        
-        }
-        else if(response.choice==='Double Sided Order'){console.log('Double Sided Order')}
-        else if(response.choice==='Limit Buy - Best Bid'){console.log('Limit Buy - Best Bid')}
-        else if(response.choice==='Limit Sell - Best Ask'){console.log('Limit Sell - Best Ask')}
-        else{console.log(response.choice)}
+        ],
+        when: function(ans){
+            return dummy(ans);
         }
     },
+    // {when: function(response){
+    //     if(response.choice==='Limit Buy- User'){console.log('limit buy')}
+    //     else if(response.choice==='Double Sided Order'){console.log('Double Sided Order')}
+    //     else if(response.choice==='Limit Buy - Best Bid'){console.log('Limit Buy - Best Bid')}
+    //     else if(response.choice==='Limit Sell - Best Ask'){console.log('Limit Sell - Best Ask')}
+    //     else if(response.choice ==='exit') {
+    //         console.log(chalk.cyan('Good Bye 👋\n'))
+    //         process.exit();
+    //     }
+    //     else{console.log(response.choice)}
+    //     }
+    // },
     {
         type: 'input',
         name: 'loop',
@@ -73,19 +67,9 @@ var q1=[
     }
 ]
 
-var questions =[
-    {
-        type: 'input',
-        name: 'buy_price',
-        message:'Price'
-      },
-      {
-        type: 'input',
-        name: 'buy_size',
-        message:'Size'  
-      }
-];
-
+function dummy(t){
+    console.log('dummy');
+}
 const logger = GTT.utils.ConsoleLoggerFactory({level: 'error'});
 const gdaxConfig:GDAXConfig ={
     logger:logger,
@@ -134,10 +118,6 @@ function makePrompt(msg) {
 //recursive function
 function ask() {
     inquirer.prompt(q1).then(answers =>{
-        // if(answers.choice ==='exit') {
-        //     console.log(chalk.cyan('Good Bye 👋\n'))
-        //     process.exit();
-        // }
         if(answers.loop==='y'){
             ask();
         }
