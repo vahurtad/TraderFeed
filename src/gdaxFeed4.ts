@@ -60,8 +60,12 @@ function loadTicker(product: string) {
         });
         console.log('TICKER');
         book.on('LiveOrderbook.ticker', (ticker: Ticker) => {
-        console.log(printTicker(product,ticker));
-        //  console.log(printStats(book));
+        //console.log(printTicker(product,ticker));
+        setInterval(()=>{
+            console.log(printStats(book));
+
+        },2000)
+       // console.log(printStats(book));
         });
         feed.pipe(book);
         getUserKey();
@@ -73,8 +77,8 @@ function padString(str: string, size: number): string {
 }
 
 function printStats(book: LiveOrderbook) {
-  return `${chalk.red('|')}${padfloat(book.state().asks[0].totalSize,9,4)}${padfloat(book.ticker.ask,10,2)}`
-       +`\t${chalk.green('|')}${padfloat(book.state().bids[0].totalSize,9,4)}${padfloat(book.ticker.price,10,2)}`;
+  return `${chalk.red('|')}${padfloat(book.state().asks[0].totalSize,5,4)} ${book.state().asks[0].price}`
+       +`\t${chalk.green('|')}${padfloat(book.state().bids[0].totalSize,5,4)} ${book.state().bids[0].price}` ;
 }
 
 function printOrder(order: LiveOrder) {
@@ -107,7 +111,7 @@ function getUserKey(){
 }
 
 
-function loadBalances(){
+function loadBalances(){4
   gdax.loadBalances().then(function(token){
       console.log(token);
   }).catch(function(err){console.log('ERROR',err)})}
@@ -123,49 +127,22 @@ function loadOrders(product : string){
 
 loadTicker('BCH-USD')
 
-// function parseOrder(order : string,size : Number, price:Number){
-//   switch(order){
-//     case 'lb':{
-//       console.log(chalk.green('LIMIT BUY'+  price +_size));
-//       break;
-//       // limitOrderBuy(product,price,size);
-//     }
-//     case 'ls':{
-//       console.log(chalk.red('LIMIT SELL'));
-//       break;
-//     }
-//     case 'mb':{
-//       console.log(chalk.green('MARKET BUY'));
-//       break;
-//       // limitOrderBuy(product,price,size);
-//     }
-//     case 'ms':{
-//       console.log(chalk.red('MARKET SELL'));
-//       break;
-//     }
-//     default:{
-//       console.log('Nothing to do');
-//       break;
-//     }
-//   }
-// }
-
 function limitOrderBuy(product: string, price: string, size: string){
   const order: PlaceOrderMessage ={
-    type: 'placeOrder',
-    time: new Date(),
-    productId: product,
-    side: 'buy',
-    orderType: 'limit',
-    price: price,
-    postOnly: true, //maker: true, maker||taker: false 
-    size: size,
-  };
+      type: 'placeOrder',
+      time: new Date(),
+      productId: product,
+      side: 'buy',
+      orderType: 'limit',
+      price: price,
+      postOnly: true, //maker: true, maker||taker: false 
+      size: size,
+    };
 
-  gdax.placeOrder(order).then((liveOrder: LiveOrder)=>
-{
-    console.log(liveOrder)
-})
+    gdax.placeOrder(order).then((liveOrder: LiveOrder)=>
+    {
+        console.log(liveOrder)
+    })
 }
 // function limitOrderSell(product: string, price: string, size: string){
 //   const order: PlaceOrderMessage ={
