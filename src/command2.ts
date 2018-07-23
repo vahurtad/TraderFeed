@@ -18,6 +18,12 @@ var temp;
 /*
  * MENU  
  */
+const before = {
+    ask: '',
+    bid:'',
+    target:''
+};
+
 var feedQ= [{
     type:'rawlist',
     name:'choice',
@@ -30,21 +36,32 @@ var feedQ= [{
         'exit'
     ]}];
 
-function setLimitBuy(price, size, target, stop){
-    //buy then 
+function setLimitBuy(current_price,best_ask, price, size, target, stop){
+    //buy at target as maker 
+    //console.log(Number(current_price) == price)
     //execute double sided order
-    console.log('Price to Buy:', price)
+    if(Number(current_price) == parseFloat(price)){
+         // if order executed, then trigger doublesided order
+        console.log('trigger double sided order')
+        setDoubleSidedOrder(current_price,best_ask, stop, target, size)
+    }
+    else if(Number(current_price) == stop){
+        //cancel order
+        //exit
+        process.exit()
+    }
+   
 }
 
+//when not holding, buy and execute double sided order
+//if price > target then set @ new best ask price
+//if stop @ post did not execute stop @ market?
 function getLimitBuy1(){
-    //when not holding, buy and execute double sided order
-    //if price > target then set @ new best ask price
-    //if stop @ post did not execute stop @ market?
     inquirer.prompt([
         {
             type: 'input',
             name: 'price',
-            message:'Price'
+            message:'Price to buy'
         },
         {
             type: 'input',
@@ -55,57 +72,48 @@ function getLimitBuy1(){
         {
             type: 'input',
             name: 'target',
-            message:'Target'  
+            message:'Target to Sell'  
         },
         {
             type: 'input',
             name: 'stop',
-            message:'Stop'  
+            message:'Stop Loss'  
         }
     ]).then(params =>{
+        console.log('Price to Buy:', chalk.green(params.price))
         loadTick('1',params)
     })
 }
 
-const before = {
-    ask: '',
-    bid:'',
-    target:''
-};
-
-function setDoubleSidedOrder(p,a, stop, target, size){
-    //while holding, sell range [target or stop]
-    //if current price > target then set at best ask
-    //if price <= stop, sell @ market(taker)
-    //else sell as maker
-
+//while holding, sell range [target or stop]
+//if current price > target then set at best ask
+//if price <= stop, sell @ market(taker)
+function setDoubleSidedOrder(current_price,best_ask, stop, target, size){
+    var mytarget = target;
     //only change order when current target has changed
-    console.log(target)
-    console.log(target.valueOf() !== before.target.valueOf())
-    console.log(target.valueOf() , before.target.valueOf())
+    //console.log(best_ask,target,mytarget)
+    target = Math.max(best_ask,target,mytarget);
+    //check if target has changed
     if(target.valueOf() !== before.target.valueOf()) {
-        console.log(target)
-        before.target=target;
-      
-
-
-        if(Number(p) > parseFloat(target)){
-            //cancel order
-            
-            //set best ask
-            target = a
-            console.log('set at best',target)
-            //set order  
+        console.log('target changed', chalk.cyan(target))
+        before.target=target
+        if(Number(current_price) == target){
+            console.log('target reached')
+            //exit if order is done
         }
-        else if(Number(p)<= parseFloat(stop)){
-            //cancel order
-    
+        else if(Number(current_price)<= parseFloat(stop)){
+            //cancel order    
             //sell as taker
             console.log('sell as taker', stop)
-            process.exit();
-            
+            //complete sell
+            process.exit();           
             //set order  
         }
+    }
+    //not necessary
+    else if(target.valueOf() == before.target.valueOf()){
+        //do nothing
+        //console.log('same', target)
     }
 }
 function getDoubleSided(){
@@ -120,17 +128,20 @@ function getDoubleSided(){
         {
             type: 'input',
             name: 'target',
-            message:'target',
-            default: 'all'  
+            message:'Target to Sell'
         },
         {
             type: 'input',
             name: 'stop',
-            message:'Stop'  
+            message:'Stop Loss'  
         }
     ]).then(params =>{
         loadTick('2',params)
     })
+}
+function setLimitBuyBid(current_price,best_bid, size, target, stop){
+    //buy at best bid
+
 }
 
 function getLimitBuyBid(){
@@ -141,15 +152,26 @@ function getLimitBuyBid(){
                 name: 'size',
                 message:'Size',
                 default: 'all'  
+            },
+            {
+                type: 'input',
+                name: 'target',
+                message:'Target to Sell'
+            },
+            {
+                type: 'input',
+                name: 'stop',
+                message:'Stop Loss'  
             }
         ]).then(params =>{
-         
-            console.log(params.size);
+            loadTick('3',params)
         })
-        
-
-  
 }
+function setLimitSellAsk(current_price,best_ask, size, target, stop){
+    //sell at best ask
+
+}
+
 
 function getLimitBuyAsk(){
     //sell at best ask as it changes
@@ -161,7 +183,7 @@ function getLimitBuyAsk(){
             default: 'all'  
         }
     ]).then(params =>{
-        console.log(params.size);
+        loadTick('4',params)
     })
 }
 
@@ -186,10 +208,6 @@ const gdaxConfig : GDAXConfig ={
     }
 };
 //const gdax = new GDAXExchangeAPI(gdaxConfig);
-function dummy(x){
-    console.log('dummy',x)
-    console.log('ask',ask > x)
-}
 
 function loadTick(isMenu, params){
     var currentTicker;
@@ -207,8 +225,7 @@ function loadTick(isMenu, params){
         book.on('data',()=>{});
         book.on('LiveOrderbook.ticker', (ticker: Ticker) => {
             currentTicker = ticker.price;
-            console.log(`${chalk.green('💰 ')} ${ticker.price} ${chalk.green(' 💰')} `)
-        
+            console.log(`${chalk.green('💰 ')} ${ticker.price.toFixed(2)} ${chalk.green(' 💰')} `)        
         });
         book.on('LiveOrderbook.update', (msg: LevelMessage)=>{
             const highestBid = book.book.highestBid.price.toFixed(2);
@@ -223,13 +240,17 @@ function loadTick(isMenu, params){
                 bid = parseFloat(spread.bestBid)
                 console.log(`${chalk.green('|')} ${spread.bestBid} ${chalk.red('|')} ${spread.bestAsk}`);   
                 if(isMenu === '1'){
-                    setLimitBuy(params.price,params.size,params.target,params.stop)
+                    setLimitBuy(currentTicker,currentAsk,params.price,params.size,params.target,params.stop)
                 } 
-                if(isMenu==='2') 
-                {
+                else if(isMenu==='2'){
                     setDoubleSidedOrder(currentTicker,currentAsk,params.stop,params.target, params.size)
                 }
-                
+                else if(isMenu==='3'){
+                    setDoubleSidedOrder(currentTicker,currentAsk,params.stop,params.target, params.size)
+                }       
+                else if(isMenu==='4'){
+                    setDoubleSidedOrder(currentTicker,currentAsk,params.stop,params.target, params.size)
+                }  
             }
         });
         feed.pipe(book);
@@ -308,20 +329,11 @@ function printStats(book: LiveOrderbook) {
 /*
  * MAIN  
  */
-
 inquirer.prompt(feedQ).then(ans =>{
-    if(ans.choice ==='Limit Buy- User'){
-        getLimitBuy1();
-    }
-    else if(ans.choice ==='Double Sided Order'){
-        getDoubleSided()
-    }
-    else if(ans.choice ==='Limit Buy - Best Bid'){
-        getLimitBuyBid()
-    }
-    else if(ans.choice ==='Limit Sell - Best Ask'){
-        getLimitBuyAsk()
-    }
+    if(ans.choice ==='Limit Buy- User') getLimitBuy1();
+    else if(ans.choice ==='Double Sided Order') getDoubleSided()
+    else if(ans.choice ==='Limit Buy - Best Bid') getLimitBuyBid()
+    else if(ans.choice ==='Limit Sell - Best Ask') getLimitBuyAsk()
     else if(ans.choice==='exit'){
         console.log(chalk.cyan('Good Bye 👋\n')); process.exit();
     }
