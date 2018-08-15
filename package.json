@@ -42,7 +42,7 @@
     "markdown-magic-github-contributors": "0.0.3",
     "markdown-magic-version-badge": "1.1.1",
     "mocha": "3.2.0",
-    "nock": "9.0.2",
+    "nock": "^9.6.1",
     "nyc": "11.1.0",
     "source-map-support": "0.4.16",
     "ts-node": "^5.0.1",
