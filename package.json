@@ -5,8 +5,20 @@
   "main": "gdaxFeed4.ts",
   "author": "Vanessa Hurtado",
   "license": "MIT",
+  "scripts": {
+    "lint": "tslint -c tslint.json -p . -t stylish",
+    "pretest": "yarn run build",
+    "build": "tsc -d -p .",
+    "coverage": "yarn run build && ./node_modules/.bin/nyc --reporter text-summary ./node_modules/.bin/mocha",
+    "coverage:report": "./node_modules/.bin/nyc report --reporter text-summary --reporter html && open coverage/index.html",
+    "clean": "rm -fr build coverage .nyc_output",
+    "doc": "yarn run readme && ./node_modules/.bin/typedoc --options typedoc.json .",
+    "readme": "node generate-md.js",
+    "prepublishOnly": "yarn run build"
+  },
   "dependencies": {
     "@types/crypto-js": "3.1.32",
+    "@types/dotenv": "4.0.3",
     "@types/nock": "8.2.0",
     "@types/ws": "0.0.37",
     "bignumber.js": "5.0.0",
@@ -14,16 +26,16 @@
     "ccxt": "1.12.137",
     "chalk": "^2.4.1",
     "dotenv": "6.0.0",
-    "gdax": "0.7.0",
+    "gdax": "0.8.0",
     "limiter": "1.1.2",
-    "node": "10.8.0",
+    "node": "^10.8.0",
     "promise": "8.0.1",
-    "pushbullet": "2.0.0",
     "querystring": "0.2.0",
     "simple-mock": "0.8.0",
     "simple-statistics": "5.1.0",
     "superagent": "3.7.0",
     "ts-node": "7.0.1",
+    "typescript": "3.0.1",
     "winston": "2.3.0",
     "ws": "3.3.1"
   },
@@ -37,10 +49,8 @@
     "nock": "^9.6.1",
     "nyc": "11.1.0",
     "source-map-support": "0.4.16",
-    "ts-node": "^5.0.1",
     "tslint": "^5.9.1",
-    "typedoc": "0.8.0",
-    "typescript": "^2.7.2"
+    "typedoc": "0.8.0"
   },
   "resolutions": {
     "deasync": "^0.1.12"
