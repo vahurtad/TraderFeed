@@ -1,10 +1,10 @@
 import * as inquirer from 'inquirer'
 import chalk from 'chalk';
-import * as GTT from 'gdaxtt2';
-import { LiveBookConfig, LiveOrderbook, PlaceOrderMessage, TradeExecutedMessage, TradeFinalizedMessage, MyOrderPlacedMessage, Trigger, TickerMessage, StreamMessage, SnapshotMessage } from 'gdaxtt2/build/src/core';
-import { GDAXConfig } from 'gdaxtt2/build/src/exchanges/gdax/GDAXInterfaces';
-import { GDAXFeedConfig, GDAXExchangeAPI, GDAX_WS_FEED, GDAX_API_URL, GDAXFeed, ExchangeFeed } from 'gdaxtt2/build/src/exchanges';
-import { LiveOrder, BookBuilder } from 'gdaxtt2/build/src/lib';
+import * as GTT from 'gdax-trading-toolkit';
+import { LiveBookConfig, LiveOrderbook, PlaceOrderMessage, TradeExecutedMessage, TradeFinalizedMessage, MyOrderPlacedMessage, Trigger, TickerMessage, StreamMessage, SnapshotMessage } from 'gdax-trading-toolkit/build/src/core';
+import { GDAXConfig } from 'gdax-trading-toolkit/build/src/exchanges/gdax/GDAXInterfaces';
+import { GDAXFeedConfig, GDAXExchangeAPI, GDAX_WS_FEED, GDAX_API_URL, GDAXFeed, ExchangeFeed } from 'gdax-trading-toolkit/build/src/exchanges';
+import { LiveOrder, BookBuilder } from 'gdax-trading-toolkit/build/src/lib';
 
 const Rx = require('rx');
 const prompts = new Rx.Subject();

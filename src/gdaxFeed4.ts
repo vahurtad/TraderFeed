@@ -1,15 +1,16 @@
 
 import * as dotenv from 'dotenv';
 import chalk from 'chalk';
-import * as GTT from 'gdaxtt2';
-import { padfloat, printOrderbook } from 'gdaxtt2/build/src/utils';
-import { LiveOrder, BookBuilder } from 'gdaxtt2/build/src/lib';
-import { Ticker } from 'gdaxtt2/build/src/exchanges/PublicExchangeAPI';
-import { GDAXConfig } from 'gdaxtt2/build/src/exchanges/gdax/GDAXInterfaces';
-import { GDAXFeedConfig, GDAXExchangeAPI, GDAX_WS_FEED, GDAX_API_URL, GDAXFeed, ExchangeFeed } from 'gdaxtt2/build/src/exchanges';
-import { Big, BigJS, ZERO } from 'gdaxtt2/build/src/lib/types';
-import { LiveBookConfig, LiveOrderbook, PlaceOrderMessage, TradeExecutedMessage, TradeFinalizedMessage, MyOrderPlacedMessage, Trigger, TickerMessage, StreamMessage, SnapshotMessage } from 'gdaxtt2/build/src/core';
-import { DefaultAPI, getSubscribedFeeds,FeedFactory } from 'gdaxtt2/build/factories/gdaxFactories';
+
+import * as GTT from 'gdax-tt';
+import { padfloat, printOrderbook } from 'gdax-tt/build/src/utils';
+import { LiveOrder, BookBuilder } from 'gdax-tt/build/src/lib';
+import { Ticker } from 'gdax-tt/build/src/exchanges/PublicExchangeAPI';
+import { GDAXConfig } from 'gdax-tt/build/src/exchanges/gdax/GDAXInterfaces';
+import { GDAXFeedConfig, GDAXExchangeAPI, GDAX_WS_FEED, GDAX_API_URL, GDAXFeed, ExchangeFeed } from 'gdax-tt/build/src/exchanges';
+import { Big, BigJS, ZERO } from 'gdax-tt/build/src/lib/types';
+import { LiveBookConfig, LiveOrderbook, PlaceOrderMessage, TradeExecutedMessage, TradeFinalizedMessage, MyOrderPlacedMessage, Trigger, TickerMessage, StreamMessage, SnapshotMessage } from 'gdax-tt/build/src/core';
+import { DefaultAPI, getSubscribedFeeds,FeedFactory } from 'gdax-tt/build/src/factories/gdaxFactories';
 
 chalk.enabled=true;
 const result = dotenv.config();
@@ -18,7 +19,7 @@ input.setEncoding('utf-8');
 const spread = Big('0.15');
 const logger = GTT.utils.ConsoleLoggerFactory({level: 'error'});
 
-process.on('UnhandledPromiseRejectionWarning', () => {});
+//process.on('UnhandledPromiseRejectionWarning', () => {});
 
 const gdaxConfig:GDAXConfig ={
     logger:logger,

@@ -2,14 +2,13 @@ var inquirer = require('inquirer');
 import chalk from 'chalk';
 import * as dotenv from 'dotenv';
 
-import * as GTT from 'gdaxtt2'
-import { padfloat, printOrderbook } from 'gdaxtt2/build/src/utils';
-import { LiveBookConfig, LiveOrderbook, PlaceOrderMessage, TradeExecutedMessage, TradeFinalizedMessage, MyOrderPlacedMessage, Trigger, TickerMessage, StreamMessage, SnapshotMessage, LevelMessage } from 'gdaxtt2/build/src/core';
-import { GDAXConfig } from 'gdaxtt2/build/src/exchanges/gdax/GDAXInterfaces';
-import { GDAXFeedConfig, GDAXExchangeAPI, GDAX_WS_FEED, GDAX_API_URL, GDAXFeed, ExchangeFeed } from 'gdaxtt2/build/src/exchanges';
-// import { LiveOrder, BookBuilder } from 'gdaxtt2/build/src/core';
-import { Ticker } from 'gdaxtt2/build/src/exchanges/PublicExchangeAPI';
-import { DefaultAPI, getSubscribedFeeds,FeedFactory } from 'gdaxtt2/build/src/factories/gdaxFactories';
+import * as GTT from 'gdax-tt'
+import { padfloat, printOrderbook } from 'gdax-tt/build/src/utils';
+import { LiveBookConfig, LiveOrderbook, PlaceOrderMessage, TradeExecutedMessage, TradeFinalizedMessage, MyOrderPlacedMessage, Trigger, TickerMessage, StreamMessage, SnapshotMessage, LevelMessage } from 'gdax-tt/build/src/core';
+import { GDAXConfig } from 'gdax-tt/build/src/exchanges/gdax/GDAXInterfaces';
+import { GDAXFeedConfig, GDAXExchangeAPI, GDAX_WS_FEED, GDAX_API_URL, GDAXFeed, ExchangeFeed } from 'gdax-tt/build/src/exchanges';
+import { Ticker } from 'gdax-tt/build/src/exchanges/PublicExchangeAPI';
+import { DefaultAPI, getSubscribedFeeds,FeedFactory } from 'gdax-tt/build/src/factories/gdaxFactories';
 
 var bid;
 var ask;
