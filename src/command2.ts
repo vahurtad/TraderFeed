@@ -10,6 +10,8 @@ import { GDAXFeedConfig, GDAXExchangeAPI, GDAX_WS_FEED, GDAX_API_URL, GDAXFeed, 
 import { Ticker } from 'gdax-tt/build/src/exchanges/PublicExchangeAPI';
 import { DefaultAPI, getSubscribedFeeds,FeedFactory } from 'gdax-tt/build/src/factories/gdaxFactories';
 import { ZERO } from 'gdax-tt/build/src/lib/types';
+import { LiveOrder } from 'gdax-tt/build/src/lib';
+import { Balances } from 'ccxt';
 
 const result = dotenv.config();
 
@@ -27,19 +29,35 @@ const before = {
  * MAIN PROMPT
  */
 
+//  todo:  needs account prompt call
 const feedQ = [{
     type: 'rawlist',
     name: 'choice',
     message: 'Which?',
     choices: [
+        'Account',
         'Limit Buy - User',
         'Double Sided Order',
         'Limit Buy - Best Bid',
         'Limit Sell - Best Ask',
-        'Balances',
         'exit'
-    ]}];
+    ]
+}];
 
+function loadMore() {
+    inquirer.prompt([
+        {
+            type: 'rawlist',
+            name: 'more',
+            message: 'Account',
+            choices: [
+                'Balances',
+                'Orders',
+                'exit'
+            ]
+        }
+    ])
+}
 function setLimitBuy(currentPrice, bestAsk, price, size, target, stop) {
     // buy at target as maker 
     // console.log(Number(current_price) == price)
@@ -216,8 +234,37 @@ function hasAuth(): boolean {
     return false;
 }
 
-function getBalances( ) {
-    console.log(hasAuth());
+function getBalances() {
+    gdaxAPI.loadBalances().then((balances) => {
+        for (const b in balances) {
+            for (const c in balances[b]) {
+                if (c === 'USD') {
+                    /*
+                    * balance - total funds in the account
+                    * available - funds available to withdraw or trade
+                    */
+                    console.log('💵 USD 💵');
+                    console.log(`balance: ${balances[b][c].balance.toNumber()} -- available: ${balances[b][c].available.toNumber()}`);
+                }
+             }
+        }
+    }).catch((err) => {
+        console.log('error', err);
+    });
+}
+
+function getOrders() {
+    const  product = 'BCH-USD';
+    gdaxAPI.loadAllOrders(product).then((orders) => {
+        orders.forEach((order: LiveOrder) => {
+            if (order.status === 'open') {
+                console.log(`${chalk.greenBright('OPEN ORDERS')}`);
+                console.log(`${order.productId}\t${order.side}\t${order.price.toNumber()}\t`);
+            }
+        });
+    }).catch((err) => {
+        console.log('error', err);
+    });
 }
 
 function loadTick(isMenu, params) {
@@ -354,6 +401,9 @@ inquirer.prompt(feedQ).then( (ans) => {
     } else
     if (ans.choice === 'Balances') {
         getBalances();
+    } else
+    if (ans.choice === 'Orders') {
+        getOrders();
     } else
     if (ans.choice === 'exit') {
         console.log(chalk.cyan('Good Bye 👋\n')); process.exit();

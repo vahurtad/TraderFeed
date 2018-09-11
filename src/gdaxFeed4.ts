@@ -111,11 +111,10 @@ function getUserKey(){
     });
 }
 
-
-function loadBalances(){4
-  gdax.loadBalances().then(function(token){
+function loadBalances() {
+  gdax.loadBalances().then((token) => {
       console.log(token);
-  }).catch(function(err){console.log('ERROR',err)})}
+  }).catch((err) => {console.log('ERROR',err);});}
 
 function loadOrders(product : string){
   gdax.loadAllOrders(product).then((orders: LiveOrder[]) => {
