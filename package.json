@@ -2,7 +2,7 @@
   "name": "TraderFeed",
   "version": "1.0.0",
   "description": "GDAX Feed and Trader",
-  "main": "gdaxFeed4.ts",
+  "main": "command2.ts",
   "author": "Vanessa Hurtado",
   "license": "MIT",
   "scripts": {
