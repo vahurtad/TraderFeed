@@ -12,9 +12,9 @@ import { Big, BigJS, ZERO } from 'gdax-tt/build/src/lib/types';
 import { LiveBookConfig, LiveOrderbook, PlaceOrderMessage, TradeExecutedMessage, TradeFinalizedMessage, MyOrderPlacedMessage, Trigger, TickerMessage, StreamMessage, SnapshotMessage } from 'gdax-tt/build/src/core';
 import { DefaultAPI, getSubscribedFeeds,FeedFactory } from 'gdax-tt/build/src/factories/gdaxFactories';
 
-chalk.enabled =true;
+chalk.enabled = true;
 const result = dotenv.config();
-let input = process.stdin;
+const input = process.stdin;
 input.setEncoding('utf-8');
 const spread = Big('0.15');
 const logger = GTT.utils.ConsoleLoggerFactory({level: 'error'});
@@ -22,7 +22,7 @@ const logger = GTT.utils.ConsoleLoggerFactory({level: 'error'});
 // process.on('UnhandledPromiseRejectionWarning', () => {});
 
 const gdaxConfig: GDAXConfig = {
-    logger:logger,
+    logger: logger,
     apiUrl: process.env.GDAX_API_URL || 'https://api.gdax.com',
     auth: {
         key: process.env.GDAX_KEY,

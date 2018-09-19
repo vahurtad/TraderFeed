@@ -3,17 +3,17 @@
 
 import * as inquirer from 'inquirer';
 const Rx = require('rx');
-var output=[];
+const output = [];
 
 const prompts = new Rx.Subject();
 
-var type = ['price','size','target','stop'];
-var questions = [
+const type = ['price','size','target','stop'];
+const questions = [
     {
-      type:'rawlist',
-      name:'choice',
-      message:'Which?',
-      choices:[
+      type: 'rawlist',
+      name: 'choice',
+      message: 'Which?',
+      choices: [
           'Limit Buy- User',
           'Double Sided Order',
           'Limit Buy - Best Bid',
@@ -28,9 +28,9 @@ var questions = [
     }
   ];
 
-//recursive function
+// recursive function
 function ask() {
-    inquirer.prompt(questions).then(answers => {
+    inquirer.prompt(questions).then((answers) => {
       output.push(answers.choice);
       if (answers.loop) {
         ask();
@@ -38,7 +38,7 @@ function ask() {
         console.log('Your choice:', output.join(', '));
       }
     });
-}  
+}
 
 function makePrompt(msg) {
   return {
@@ -50,15 +50,15 @@ function makePrompt(msg) {
 
 let i = 0;
 inquirer.prompt(prompts).ui.process.subscribe(({ answer }) => {
-    output.push(answer);        
+    output.push(answer);
 }, (err) => {
   console.warn(err);
 }, () => {
   console.log('Answer:', output);
 });
 
-while(i<type.length){
+while (i < type.length) {
     prompts.onNext(makePrompt(type[i]));
-    i+=1;
+    i += 1;
 }
-prompts.onCompleted();  
+prompts.onCompleted();

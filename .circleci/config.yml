@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: circleci/node:7.10
+      - image: circleci/node:latest
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -30,7 +30,7 @@ jobs:
           name: Installing Dependencies
           command: yarn install
       - run: greenkeeper-lockfile-update
-
+      - run: greenkeeper-lockfile-upload
       - save_cache:
           paths:
             - node_modules
@@ -38,6 +38,6 @@ jobs:
 
        # run tests!
       #- run: yarn run pretest
-      #- run: yarn run lint
+      - run: yarn run lint
       #- run: yarn run test:mocha
 
