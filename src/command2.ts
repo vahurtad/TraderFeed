@@ -2,16 +2,14 @@ import inquirer = require('inquirer');
 import chalk from 'chalk';
 import * as dotenv from 'dotenv';
 import * as GTT from 'gdax-tt';
-import { BigJS } from 'gdax-tt/src/lib/types';
 import { padfloat, printOrderbook } from 'gdax-tt/build/src/utils';
-import { LiveBookConfig, LiveOrderbook, LevelMessage } from 'gdax-tt/build/src/core';
+import { LiveBookConfig, LiveOrderbook, LevelMessage, SkippedMessageEvent } from 'gdax-tt/build/src/core';
 import { GDAXConfig } from 'gdax-tt/build/src/exchanges/gdax/GDAXInterfaces';
-import { GDAXFeedConfig, GDAXExchangeAPI, GDAX_WS_FEED, GDAX_API_URL, GDAXFeed, ExchangeFeed } from 'gdax-tt/build/src/exchanges';
+import { GDAXFeedConfig, GDAXExchangeAPI, GDAX_API_URL, GDAXFeed, ExchangeFeed } from 'gdax-tt/build/src/exchanges';
 import { Ticker } from 'gdax-tt/build/src/exchanges/PublicExchangeAPI';
 import { DefaultAPI, getSubscribedFeeds,FeedFactory } from 'gdax-tt/build/src/factories/gdaxFactories';
 import { ZERO } from 'gdax-tt/build/src/lib/types';
 import { LiveOrder } from 'gdax-tt/build/src/lib';
-import { Balances } from 'ccxt';
 
 const result = dotenv.config();
 const spread = {
@@ -216,7 +214,7 @@ function getLimitBuyAsk() {
 const logger = GTT.utils.ConsoleLoggerFactory({level: 'error'});
 const gdaxConfig: GDAXConfig = {
     logger: logger,
-    apiUrl: process.env.GDAX_API_URL || 'https://api.gdax.com',
+    apiUrl: GDAX_API_URL || 'https://api.gdax.com',
     auth: {
         key: process.env.GDAX_KEY,
         secret: process.env.GDAX_SECRET,
@@ -284,6 +282,7 @@ function loadTick(isMenu, params) {
         logger: logger
         };
         const book = new LiveOrderbook(config);
+        // register to liveorderbook events
         book.on('data',() => { /*linter*/ });
         book.on('LiveOrderbook.ticker', (ticker: Ticker) => {
             currentTicker = ticker.price;
@@ -312,6 +311,19 @@ function loadTick(isMenu, params) {
                     setDoubleSidedOrder(currentTicker,currentAsk,params.stop,params.target, params.size);
                 }
             }
+        });
+        book.on('LiveOrderbook.skippedMessage', (details: SkippedMessageEvent) => {
+            // On GDAX, this event should never be emitted, but we put it here for completeness
+            logger.log('error','SKIPPED MESSAGE', details);
+            logger.log('error','Reconnecting to feed');
+            feed.reconnect(0);
+        });
+        book.on('end', () => {
+            logger.log('info', 'Orderbook closed');
+        });
+        book.on('error', (err) => {
+            logger.log('error', 'Livebook errored: ', err);
+            feed.pipe(book);
         });
         feed.pipe(book);
     }).catch((err) => {
