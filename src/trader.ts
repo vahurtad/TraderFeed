@@ -175,6 +175,17 @@ function getOrders() {
     });
 }
 
+function cancelOrders() {
+    console.log('Cancelling open orders..');
+    gdaxAPI.cancelAllOrders(PRODUCT_ID).then((orders: string[]) => {
+        orders.forEach((order: string) => {
+            console.log(order);
+        });
+    }).catch((err) => {
+        console.log('error', err);
+    });
+}
+
 function loadTick(isMenu, params) {
     let currentTicker = ZERO;
     let currentAsk = 0;
@@ -250,6 +261,7 @@ function placeOrder(order: PlaceOrderMessage) {
 }
 
 function limitOrderBuy(price: string, size: string) {
+    // placing on order book
     const order: PlaceOrderMessage = {
         type: 'placeOrder',
         time: new Date(),
@@ -264,6 +276,7 @@ function limitOrderBuy(price: string, size: string) {
   }
 
 function limitOrderSell(price: string, size: string) {
+    // placing on order book
     const order: PlaceOrderMessage = {
         type: 'placeOrder',
         time: new Date(),
@@ -277,6 +290,7 @@ function limitOrderSell(price: string, size: string) {
     placeOrder(order);
 }
 function marketOrderBuy(price: string, size: string) {
+    // taking from order book
     const order: PlaceOrderMessage = {
         type: 'placeOrder',
         time: new Date(),
@@ -289,6 +303,7 @@ function marketOrderBuy(price: string, size: string) {
     placeOrder(order);
 }
 function marketOrderSell(price: string, size: string) {
+    // taking from order book
     const order: PlaceOrderMessage = {
         type: 'placeOrder',
         time: new Date(),
