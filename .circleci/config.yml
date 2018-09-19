@@ -24,7 +24,13 @@ jobs:
           - v1-dependencies-{{ checksum "yarn.lock" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
-      - run: yarn global add greenkeeper-lockfile@1
+      #- run: yarn global add greenkeeper-lockfile@1
+      - run:
+        name: prepare greenkeeper-lockfile
+        command: |
+          echo 'export PATH=$(yarn global bin):$PATH' >> $BASH_ENV
+          source $BASH_ENV
+          yarn global add greenkeeper-lockfile@1
       - run: 
           name: Installing Dependencies
           command: yarn install
