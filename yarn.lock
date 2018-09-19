@@ -695,9 +695,9 @@ ccxt@1.12.137:
     opencollective "1.0.3"
     qs "6.5.1"
 
-ccxt@1.17.314:
-  version "1.17.314"
-  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-1.17.314.tgz#fba5aaaf9dc3f521aefaf766fbdafbb15e8eb70e"
+ccxt@1.17.315:
+  version "1.17.315"
+  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-1.17.315.tgz#5d73f2c199a7fe13d54c3a75419cefbf8821b8b3"
   dependencies:
     bignumber.js "7.2.1"
     cloudscraper "1.4.1"
