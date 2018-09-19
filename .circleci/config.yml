@@ -25,12 +25,7 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
       #- run: yarn global add greenkeeper-lockfile@1
-      - run:
-        name: prepare greenkeeper-lockfile
-        command: |
-          echo 'export PATH=$(yarn global bin):$PATH' >> $BASH_ENV
-          source $BASH_ENV
-          yarn global add greenkeeper-lockfile@1
+      - run: sudo yarn global add yarn@1.7.0 greenkeeper-lockfile@1
       - run: 
           name: Installing Dependencies
           command: yarn install
