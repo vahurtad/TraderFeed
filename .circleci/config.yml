@@ -35,7 +35,7 @@ jobs:
           key: v1-dependencies-{{ checksum "yarn.lock" }}
 
        # run tests!
-      - run: yarn run pretest
+      #- run: yarn run pretest
       - run: yarn run lint
       - run: yarn run test:mocha
 
