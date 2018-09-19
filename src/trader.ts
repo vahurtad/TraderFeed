@@ -1,17 +1,17 @@
 import inquirer = require('inquirer');
 import chalk from 'chalk';
-import * as dotenv from 'dotenv';
+import * as prompt from './prompts';
 import * as GTT from 'gdax-tt';
-import { padfloat, printOrderbook } from 'gdax-tt/build/src/utils';
+import { padfloat } from 'gdax-tt/build/src/utils';
 import { LiveBookConfig, LiveOrderbook, LevelMessage, SkippedMessageEvent } from 'gdax-tt/build/src/core';
 import { GDAXConfig } from 'gdax-tt/build/src/exchanges/gdax/GDAXInterfaces';
-import { GDAXFeedConfig, GDAXExchangeAPI, GDAX_API_URL, GDAXFeed, ExchangeFeed } from 'gdax-tt/build/src/exchanges';
+import { GDAXExchangeAPI, GDAX_API_URL, GDAXFeed } from 'gdax-tt/build/src/exchanges';
 import { Ticker } from 'gdax-tt/build/src/exchanges/PublicExchangeAPI';
-import { DefaultAPI, getSubscribedFeeds,FeedFactory } from 'gdax-tt/build/src/factories/gdaxFactories';
+import { getSubscribedFeeds } from 'gdax-tt/build/src/factories/gdaxFactories';
 import { ZERO } from 'gdax-tt/build/src/lib/types';
 import { LiveOrder } from 'gdax-tt/build/src/lib';
+require('dotenv').config();
 
-const result = dotenv.config();
 const spread = {
     bestBid: '',
     bestAsk: ''
@@ -21,102 +21,6 @@ const before = {
     bid: '',
     target: ''
 };
-
-/*
- * PROMPTS
- */
-
-const feedQ = [{
-    type: 'rawlist',
-    name: 'choice',
-    message: 'Which?',
-    choices: [
-        'Account',
-        'Limit Buy - User',
-        'Double Sided Order',
-        'Limit Buy - Best Bid',
-        'Limit Sell - Best Ask',
-        'exit'
-    ]
-}];
-const accountMenu = [{
-    type: 'rawlist',
-    name: 'more',
-    message: 'Account',
-    choices: [
-        'Balances',
-        'Orders',
-        'Auth',
-        'exit'
-    ]
-}];
-const limitBuyPrompt = [
-    {
-        type: 'input',
-        name: 'price',
-        message: 'Price to buy'
-    },
-    {
-        type: 'input',
-        name: 'size',
-        message: 'Size',
-        default: 'all'
-    },
-    {
-        type: 'input',
-        name: 'target',
-        message: 'Target to Sell'
-    },
-    {
-        type: 'input',
-        name: 'stop',
-        message: 'Stop Loss'
-    }
-];
-const doubleSidedPrompt = [
-    {
-        type: 'input',
-        name: 'size',
-        message: 'Size',
-        default: 'all'
-     },
-     {
-        type: 'input',
-        name: 'target',
-        message: 'Target to Sell'
-     },
-     {
-        type: 'input',
-        name: 'stop',
-        message: 'Stop Loss'
-     }
- ];
-const limitBuyBidPrompt = [
-    {
-        type: 'input',
-        name: 'size',
-        message: 'Size',
-        default: 'all'
-    },
-    {
-        type: 'input',
-        name: 'target',
-        message: 'Target to Sell'
-    },
-    {
-        type: 'input',
-        name: 'stop',
-        message: 'Stop Loss'
-    }
-];
-const limitBuyAskPrompt = [
-    {
-        type: 'input',
-        name: 'size',
-        message: 'Size',
-        default: 'all'
-    }
-];
 
 function setLimitBuy(currentPrice, bestAsk, price, size, target, stop) {
     // buy at target as maker 
@@ -140,7 +44,7 @@ function setLimitBuy(currentPrice, bestAsk, price, size, target, stop) {
 * if stop @ post did not execute stop @ market?
 */
 function getLimitBuy() {
-    inquirer.prompt(limitBuyPrompt).then( (params) => {
+    inquirer.prompt(prompt.limitBuyPrompt).then( (params) => {
         console.log('Price to Buy:', chalk.green(params.price));
         loadTick('1',params);
     });
@@ -183,7 +87,7 @@ function setDoubleSidedOrder(currentPrice, bestAsk, stop, target, size) {
 }
 function getDoubleSided() {
     // executes when holding
-    inquirer.prompt(doubleSidedPrompt).then( (params) => {
+    inquirer.prompt(prompt.doubleSidedPrompt).then( (params) => {
         loadTick('2',params);
     });
 }
@@ -193,7 +97,7 @@ function setLimitBuyBid(currentPrice,bestBid, size, target, stop) {
 
 function getLimitBuyBid() {
     // buy at best bid as it changes
-    inquirer.prompt(limitBuyBidPrompt).then((params) => {
+    inquirer.prompt(prompt.limitBuyBidPrompt).then((params) => {
         loadTick('3',params);
     });
 }
@@ -203,7 +107,7 @@ function setLimitSellAsk(currentPrice,bestAsk, size, target, stop) {
 
 function getLimitBuyAsk() {
     // sell at best ask as it changes
-    inquirer.prompt(limitBuyAskPrompt).then((params) => {
+    inquirer.prompt(prompt.limitBuyAskPrompt).then((params) => {
         loadTick('4',params);
     });
 }
@@ -283,7 +187,11 @@ function loadTick(isMenu, params) {
         };
         const book = new LiveOrderbook(config);
         // register to liveorderbook events
-        book.on('data',() => { /*linter*/ });
+        book.on('data',() => {
+            // https://github.com/coinbase/gdax-tt/issues/110
+            // listening to 'data' event, all data remain in memory
+            // force stream in flowing state
+        });
         book.on('LiveOrderbook.ticker', (ticker: Ticker) => {
             currentTicker = ticker.price;
             console.log(`${chalk.green('💰 ')} ${ticker.price.toFixed(2)} ${chalk.green(' 💰')} `);
@@ -403,7 +311,7 @@ function printStats(book: LiveOrderbook) {
 /*
  * MAIN PROMPT CALL
  */
-inquirer.prompt(feedQ).then( (ans) => {
+inquirer.prompt(prompt.feedQ).then( (ans) => {
     if (ans.choice === 'Account') {
         gotoAccountMenu();
     } else
@@ -427,7 +335,7 @@ inquirer.prompt(feedQ).then( (ans) => {
 });
 
 function gotoAccountMenu() {
-    inquirer.prompt(accountMenu).then( (ans) => {
+    inquirer.prompt(prompt.accountMenu).then( (ans) => {
         if (ans.more === 'Balances') {
             getBalances();
         } else
