@@ -5,6 +5,7 @@ import * as GTT from 'gdax-tt';
 import { padfloat } from 'gdax-tt/build/src/utils';
 import { LiveBookConfig, LiveOrderbook, LevelMessage, SkippedMessageEvent } from 'gdax-tt/build/src/core';
 import { GDAXConfig } from 'gdax-tt/build/src/exchanges/gdax/GDAXInterfaces';
+import { PlaceOrderMessage } from 'gdax-tt/build/src/core/Messages';
 import { GDAXExchangeAPI, GDAX_API_URL, GDAXFeed } from 'gdax-tt/build/src/exchanges';
 import { Ticker } from 'gdax-tt/build/src/exchanges/PublicExchangeAPI';
 import { getSubscribedFeeds } from 'gdax-tt/build/src/factories/gdaxFactories';
@@ -21,15 +22,16 @@ const before = {
     bid: '',
     target: ''
 };
+const PRODUCT_ID = 'BCH-USD';
 
 function setLimitBuy(currentPrice, bestAsk, price, size, target, stop) {
     // buy at target as maker 
-    // console.log(Number(current_price) == price)
+    limitOrderBuy(price,size);
     // execute double sided order
     if (Number(currentPrice) === parseFloat(price)) {
          // if order executed, then trigger doublesided order
         console.log('trigger double sided order');
-        setDoubleSidedOrder(currentPrice,bestAsk, stop, target, size);
+        setDoubleSidedOrder(currentPrice, bestAsk, stop, target, size);
     } else
     if (Number(currentPrice) === stop) {
         // cancel order
@@ -51,7 +53,7 @@ function getLimitBuy() {
 }
 
 /*
-* while holding, sell range [target or stop]
+* while holding, sell within range [target or stop]
 * if current price > target then set at best ask
 * if price <= stop, sell @ market(taker)
 */
@@ -148,7 +150,7 @@ function getBalances() {
                     console.log('💵 USD 💵');
                     console.log(`balance: ${balances[b][c].balance.toNumber()} -- available: ${balances[b][c].available.toNumber()}`);
                 }
-             }
+            }
         }
     }).catch((err) => {
         console.log('error', err);
@@ -156,9 +158,8 @@ function getBalances() {
 }
 
 function getOrders() {
-    const  product = 'BCH-USD';
-    console.log(product);
-    gdaxAPI.loadAllOrders(product).then((orders) => {
+    console.log(PRODUCT_ID);
+    gdaxAPI.loadAllOrders(PRODUCT_ID).then((orders) => {
         if (orders.length === 0) {
             console.log('No orders');
         }
@@ -179,10 +180,9 @@ function loadTick(isMenu, params) {
     let currentAsk = 0;
     let currentBid = 0;
     let bid = 0;
-    const  product = 'BCH-USD';
-    getSubscribedFeeds(gdaxConfig, [product]).then((feed: GDAXFeed) => {
+    getSubscribedFeeds(gdaxConfig, [PRODUCT_ID]).then((feed: GDAXFeed) => {
         const config: LiveBookConfig = {
-        product: product,
+        product: PRODUCT_ID,
         logger: logger
         };
         const book = new LiveOrderbook(config);
@@ -239,63 +239,71 @@ function loadTick(isMenu, params) {
     });
 }
 
-// function limitOrderBuy(product: string, price: string, size: string){
-//     const order: PlaceOrderMessage ={
-//         type: 'placeOrder',
-//         time: new Date(),
-//         productId: product,
-//         side: 'buy',
-//         orderType: 'limit',
-//         price: price,
-//         postOnly: true, //maker: true, maker||taker: false 
-//         size: size,
-//       };
-//       gdax.placeOrder(order).then((liveOrder: LiveOrder)=>
-//       {
-//           console.log(liveOrder)
-//       })
-//   }
+function placeOrder(order: PlaceOrderMessage) {
+    const msg = `Limit ${order.side} order for ${order.size} at ${order.price}`;
+    gdaxAPI.placeOrder(order).then((liveOrder: LiveOrder) => {
+        console.log(liveOrder);
+        console.log(msg);
+    }).catch((err) => {
+        console.log('ERROR',err);
+    });
+}
 
-  // function limitOrderSell(product: string, price: string, size: string){
-//   const order: PlaceOrderMessage ={
-//     type: 'placeOrder',
-//     time: new Date(),
-//     productId: product,
-//     side: 'sell',
-//     orderType: 'limit',
-//     price: price,
-//     postOnly: true, //maker: true, maker|taker: false 
-//     size: size,
-//   }
-// }
+function limitOrderBuy(price: string, size: string) {
+    const order: PlaceOrderMessage = {
+        type: 'placeOrder',
+        time: new Date(),
+        productId: PRODUCT_ID,
+        side: 'buy',
+        orderType: 'limit',
+        price: price,
+        postOnly: true, // maker: true, maker||taker: false 
+        size: size,
+      };
+    placeOrder(order);
+  }
 
-// function marketOrderBuy(product: string, price: string, size: string){
-//   const order: PlaceOrderMessage ={
-//     type: 'placeOrder',
-//     time: new Date(),
-//     productId: product,
-//     side: 'buy',
-//     orderType: 'market',
-//     price: price,
-//     size: size,
-//   }
-// }
-// function marketOrderSell(product: string, price: string, size: string){
-//   const order: PlaceOrderMessage ={
-//     type: 'placeOrder',
-//     time: new Date(),//null?
-//     productId: product,
-//     side: 'sell',
-//     orderType: 'market',
-//     price: price,
-//     size: size,
-//   }
-// }
-
+function limitOrderSell(price: string, size: string) {
+    const order: PlaceOrderMessage = {
+        type: 'placeOrder',
+        time: new Date(),
+        productId: PRODUCT_ID,
+        side: 'sell',
+        orderType: 'limit',
+        price: price,
+        postOnly: true, // maker: true, maker|taker: false 
+        size: size,
+    };
+    placeOrder(order);
+}
+function marketOrderBuy(price: string, size: string) {
+    const order: PlaceOrderMessage = {
+        type: 'placeOrder',
+        time: new Date(),
+        productId: PRODUCT_ID,
+        side: 'buy',
+        orderType: 'market',
+        price: price,
+        size: size,
+    };
+    placeOrder(order);
+}
+function marketOrderSell(price: string, size: string) {
+    const order: PlaceOrderMessage = {
+        type: 'placeOrder',
+        time: new Date(),
+        productId: PRODUCT_ID,
+        side: 'sell',
+        orderType: 'market',
+        price: price,
+        size: size,
+    };
+    placeOrder(order);
+}
 /*
 * PRINT FUNCTIONS
 */
-function printTicker(product: string, ticker: Ticker, quotePrec: number = 2): string {
+function printTicker(ticker: Ticker, quotePrec: number = 2): string {
     return `${padfloat(ticker.price, 10, quotePrec)}`;
   }
 

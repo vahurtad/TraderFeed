@@ -50,7 +50,16 @@ function one() {
 inquirer.prompt(feedQ).then((ans) => {
     if (ans.choice === 'Limit Buy- User') {
         one();
-    } else if (ans.choice === 'Double Sided Order') { one(); } else if (ans.choice === 'Limit Buy - Best Bid') { one(); } else if (ans.choice === 'Limit Sell - Best Ask') { one(); } else if (ans.choice === 'exit') {
+    } else
+    if (ans.choice === 'Double Sided Order') {
+        one();
+    } else
+    if (ans.choice === 'Limit Buy - Best Bid') {
+        one();
+    } else
+    if (ans.choice === 'Limit Sell - Best Ask') { one();
+    } else
+    if (ans.choice === 'exit') {
         console.log(chalk.cyan('Good Bye 👋\n')); process.exit();
     } else { console.log('Sorry, wrong answer'); }
 });

@@ -9,7 +9,8 @@ import { Ticker } from 'gdax-tt/build/src/exchanges/PublicExchangeAPI';
 import { GDAXConfig } from 'gdax-tt/build/src/exchanges/gdax/GDAXInterfaces';
 import { GDAXFeedConfig, GDAXExchangeAPI, GDAX_WS_FEED, GDAX_API_URL, GDAXFeed, ExchangeFeed } from 'gdax-tt/build/src/exchanges';
 import { Big, BigJS, ZERO } from 'gdax-tt/build/src/lib/types';
-import { LiveBookConfig, LiveOrderbook, PlaceOrderMessage, TradeExecutedMessage, TradeFinalizedMessage, MyOrderPlacedMessage, Trigger, TickerMessage, StreamMessage, SnapshotMessage } from 'gdax-tt/build/src/core';
+import { LiveBookConfig, LiveOrderbook, PlaceOrderMessage, TradeExecutedMessage, TradeFinalizedMessage,
+    MyOrderPlacedMessage, Trigger, TickerMessage, StreamMessage, SnapshotMessage } from 'gdax-tt/build/src/core';
 import { DefaultAPI, getSubscribedFeeds,FeedFactory } from 'gdax-tt/build/src/factories/gdaxFactories';
 
 chalk.enabled = true;
@@ -52,7 +53,11 @@ function loadTicker(product: string) {
         };
         const book = new LiveOrderbook(config);
 
-        book.on('data',() => {});
+        book.on('data',() => {
+            // https://github.com/coinbase/gdax-tt/issues/110
+            // listening to 'data' event, all data remain in memory
+            // force stream in flowing state
+        });
         book.on('LiveOrderbook.snapshot', () => {
         // setInterval(()=>{
         //  // console.log(DefaultAPI(logger));
@@ -70,7 +75,7 @@ function loadTicker(product: string) {
         });
         feed.pipe(book);
         getUserKey();
-    }).catch(function(err) {console.log('ERROR',err);});
+    }).catch((err) => {console.log('ERROR',err);});
 }
 
 function padString(str: string, size: number): string {
@@ -93,8 +98,7 @@ function printTicker(product: string, ticker: Ticker, quotePrec: number = 2): st
 
 function getUserKey() {
     input.setRawMode(true);
-    let str;
-    input.on('data', function(key) {
+    input.on('data', (key) => {
     //   if(key.includes('b'||'B')){
     //     logger.log('info',`Set Buy Limit`)
     //     str = key.split(' ');
