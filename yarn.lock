@@ -3635,9 +3635,9 @@ simple-statistics@5.1.0:
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/simple-statistics/-/simple-statistics-5.1.0.tgz#85eda0e7ea2fa62619c6ab22e243f5d45ad74ffd"
 
-simple-statistics@6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/simple-statistics/-/simple-statistics-6.1.0.tgz#63456076bb27bea10aefc180892d163536b6027a"
+simple-statistics@6.1.1:
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/simple-statistics/-/simple-statistics-6.1.1.tgz#e3a0799ffc49914d6f421c5a4ac585f6a13e2bad"
 
 simple-swizzle@^0.2.2:
   version "0.2.2"
