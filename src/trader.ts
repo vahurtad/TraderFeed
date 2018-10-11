@@ -24,29 +24,39 @@ const before = {
 };
 const PRODUCT_ID = 'BCH-USD';
 
-function setLimitBuy(currentPrice, bestAsk, params) {
+/*
+* executes user order
+* while not holding, buy and execute double sided order
+* if current price > target then set at best ask
+* if stop did not execute, then sell @ market?
+*/
+function set_Limit_Buy_to_Double(currentPrice, bestAsk, params) {
     // params.price,params.size,params.target,params.stop
     // buy at target as maker 
     limitOrderBuy(params.price,params.size);
+    // wait for oder message
     // execute double sided order
+    // needs to be changed to check if order was executed and not price equality
     if (Number(currentPrice) === parseFloat(params.price)) {
          // if order executed, then trigger doublesided order
         console.log('trigger double sided order');
-        setDoubleSidedOrder(currentPrice, bestAsk, params);
+        get_Double_Sided();
     } else
-    if (Number(currentPrice) === params.stop) {
+    // if order did not execute and price <= stop
+    if (Number(currentPrice) <= parseFloat(params.stop)) {
         // cancel order
+        // do nothing because it did not buy
+        cancelOrders();
         // exit
         process.exit();
     }
 }
 
 /* 
-* when not holding, buy and execute double sided order
-* if price > target then set @ new best ask price
-* if stop @ post did not execute stop @ market?
+* gets user input
+* to buy and use double sided order
 */
-function getLimitBuy() {
+function get_Limit_Buy() {
     inquirer.prompt(prompt.limitBuyPrompt).then( (params) => {
         console.log('Price to Buy:', chalk.green(params.price));
         loadTick('1',params);
@@ -54,11 +64,12 @@ function getLimitBuy() {
 }
 
 /*
-* while holding, sell within range [target or stop]
+* executes user order
+* while holding, first sell within range [target or stop]
 * if current price > target then set at best ask
 * if price <= stop, sell @ market(taker)
 */
-function setDoubleSidedOrder(currentPrice, bestAsk, params) {
+function set_Double_Sided_Order(currentPrice, bestAsk, params) {
     const mytarget = params.target;
     /*
     * only change order when current target has changed
@@ -71,13 +82,18 @@ function setDoubleSidedOrder(currentPrice, bestAsk, params) {
         before.target = params.target;
         if (Number(currentPrice) === params.target) {
             console.log('target reached');
+            // check if order executed
             // exit if order is done
         } else
         if (Number(currentPrice) <= parseFloat(params.stop)) {
             // cancel order  
             cancelOrders();
-            // sell as taker
+            // sell as taker at current price of ticker
             console.log('sell as taker', params.stop);
+            // need to have a spread for selling
+            // sells according to set size
+            // need prompt here asking to sell all or an amount
+            marketOrderSell(params.size);
             // complete sell
             process.exit();
             // set order  
@@ -89,29 +105,36 @@ function setDoubleSidedOrder(currentPrice, bestAsk, params) {
         // console.log('same', target)
     }
 }
-function getDoubleSided() {
+
+/* 
+* gets user input
+*/
+function get_Double_Sided() {
     // executes when holding
     inquirer.prompt(prompt.doubleSidedPrompt).then( (params) => {
         loadTick('2',params);
     });
 }
 
-function Limit_Buy(currentPrice,bestBid, size, target, stop) {
+// executes user order
+function set_Limit_Buy(currentPrice, bestBid, params) {
     // buy at best bid
 }
-
-function Limit_Buy_Change() {
+// gets user input
+function get_Limit_Buy_Change() {
     // buy at best bid as it changes
     // resets order as best bid changes
     inquirer.prompt(prompt.limitBuyBidPrompt).then((params) => {
         loadTick('3',params);
     });
 }
-function Limit_Sell(currentPrice,bestAsk, size, target, stop) {
+
+// executes user order
+function set_Limit_Sell(currentPrice,bestAsk, params) {
     // sell at best ask
 }
-
-function Limit_Sell_Change() {
+// gets user input
+function get_Limit_Sell_Change() {
     // sell at best ask as it changes
     // resets order as best ask changes
     inquirer.prompt(prompt.limitBuyAskPrompt).then((params) => {
@@ -163,34 +186,8 @@ function getBalances() {
 }
 
 /******************************************************************************************
-* ORDER FUNCTIONS
+* FEEDS
 *******************************************************************************************/
-function getOrders() {
-    gdaxAPI.loadAllOrders(PRODUCT_ID).then((orders) => {
-        if (orders.length === 0) {
-            console.log(chalk.redBright('No orders'));
-        } else {
-            orders.forEach((order: LiveOrder) => {
-                console.log(`${chalk.greenBright(order.status.toUpperCase())}${chalk.greenBright(' ORDERS')}`);
-                console.log(`${order.productId}\t${order.side}\t${order.price.toNumber()}\t`);
-            });
-        }
-    }).catch((err) => {
-        console.log('error', err);
-    });
-}
-
-function cancelOrders() {
-    console.log('Cancelling open orders..');
-    gdaxAPI.cancelAllOrders(PRODUCT_ID).then((orders: string[]) => {
-        orders.forEach((order: string) => {
-            console.log(order);
-        });
-    }).catch((err) => {
-        console.log('error', err);
-    });
-}
-
 function loadTick(isMenu, params) {
     let currentTicker = ZERO;
     let currentAsk = 0;
@@ -223,16 +220,16 @@ function loadTick(isMenu, params) {
                 bid = parseFloat(spread.bestBid);
                 console.log(`${chalk.green('|')} ${spread.bestBid} ${chalk.red('|')} ${spread.bestAsk}`);
                 if (isMenu === '1') {
-                    setLimitBuy(currentTicker,currentAsk,params);
+                    set_Limit_Buy_to_Double(currentTicker,currentAsk,params);
                 } else
                 if (isMenu === '2') {
-                    setDoubleSidedOrder(currentTicker,currentAsk,params);
+                    set_Double_Sided_Order(currentTicker,currentAsk,params);
                 } else
                 if (isMenu === '3') {
-                    setDoubleSidedOrder(currentTicker,currentAsk,params);
+                    set_Limit_Buy(currentTicker,currentAsk,params);
                 } else
                 if (isMenu === '4') {
-                    setDoubleSidedOrder(currentTicker,currentAsk,params);
+                    set_Limit_Sell(currentTicker,currentAsk,params);
                 }
             }
         });
@@ -256,9 +253,32 @@ function loadTick(isMenu, params) {
 }
 
 /******************************************************************************************
-* PLACE ORDER FUNCTIONS
+* ORDER FUNCTIONS
 *******************************************************************************************/
-
+function getOrders() {
+    gdaxAPI.loadAllOrders(PRODUCT_ID).then((orders) => {
+        if (orders.length === 0) {
+            console.log(chalk.redBright('No orders'));
+        } else {
+            orders.forEach((order: LiveOrder) => {
+                console.log(`${chalk.greenBright(order.status.toUpperCase())}${chalk.greenBright(' ORDERS')}`);
+                console.log(`${order.productId}\t${order.side}\t${order.price.toNumber()}\t`);
+            });
+        }
+    }).catch((err) => {
+        console.log('error', err);
+    });
+}
+function cancelOrders() {
+    console.log('Cancelling open orders..');
+    gdaxAPI.cancelAllOrders(PRODUCT_ID).then((orders: string[]) => {
+        orders.forEach((order: string) => {
+            console.log(order);
+        });
+    }).catch((err) => {
+        console.log('error', err);
+    });
+}
 function placeOrder(order: PlaceOrderMessage) {
     // this places order message 
     const msg = `Limit ${order.side} order for ${order.size} at ${order.price}`;
@@ -298,7 +318,7 @@ function limitOrderSell(price: string, size: string) {
     };
     placeOrder(order);
 }
-function marketOrderBuy(price: string, size: string) {
+function marketOrderBuy(size: string) {
     // taking from order book
     const order: PlaceOrderMessage = {
         type: 'placeOrder',
@@ -306,12 +326,11 @@ function marketOrderBuy(price: string, size: string) {
         productId: PRODUCT_ID,
         side: 'buy',
         orderType: 'market',
-        price: price,
         size: size,
     };
     placeOrder(order);
 }
-function marketOrderSell(price: string, size: string) {
+function marketOrderSell(size: string) {
     // taking from order book
     const order: PlaceOrderMessage = {
         type: 'placeOrder',
@@ -319,7 +338,6 @@ function marketOrderSell(price: string, size: string) {
         productId: PRODUCT_ID,
         side: 'sell',
         orderType: 'market',
-        price: price,
         size: size,
     };
     placeOrder(order);
@@ -348,16 +366,16 @@ inquirer.prompt(prompt.feedQ).then( (ans) => {
             gotoAccountMenu();
         } else
         if (ans.choice === 'Limit Buy- User') {
-            getLimitBuy();
+            get_Limit_Buy();
         } else
         if (ans.choice === 'Double Sided Order') {
-            getDoubleSided();
+            get_Double_Sided();
         } else
         if (ans.choice === 'Limit Buy - Best Bid') {
-            Limit_Buy_Change();
+            get_Limit_Buy_Change();
         } else
         if (ans.choice === 'Limit Sell - Best Ask') {
-            Limit_Sell_Change();
+            get_Limit_Sell_Change();
         } else
         if (ans.choice === 'exit') {
             console.log(chalk.cyan('Good Bye 👋\n')); process.exit();
