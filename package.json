@@ -56,7 +56,7 @@
     "nyc": "13.0.1",
     "source-map-support": "0.5.9",
     "tslint": "^5.9.1",
-    "typedoc": "0.12.0"
+    "typedoc": "0.13.0"
   },
   "resolutions": {
     "deasync": "^0.1.12"
