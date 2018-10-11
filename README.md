@@ -3,13 +3,17 @@ Trader helper built on top of [GDAX TRADING TOOLKIT](https://github.com/coinbase
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/vahurtad/TraderFeed.svg?style=flat-square)](https://greenkeeper.io/)
 
+[![CircleCI](https://circleci.com/gh/vahurtad/TraderFeed/tree/master.svg?style=svg)](https://circleci.com/gh/vahurtad/TraderFeed/tree/master)
+
 ## Clone
     git clone https://github.com/coinbase/gdax-tt.git 
 
-## Build
+## Build gdax-tt module
  Run the included test suite with the command
 
     yarn run build
 
 # GDAX Trading toolkit
-[GDAX TT ](https://github.com/coinbase/gdax-tt.git)
+[GDAX TT ](https://github.com/coinbase/gdax-tt)
+
+
