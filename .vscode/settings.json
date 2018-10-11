@@ -1,4 +1,5 @@
 {
-    "editor.fontFamily": "Consolas, 'Courier New', monospace, 'Segoe UI Emoji'"
+    "editor.fontFamily": "Consolas, 'Courier New', monospace, 'Segoe UI Emoji'",
+    "typescript.tsdk": "node_modules\\typescript\\lib"
     //"typescript.tsdk": "node_modules\\typescript\\lib"
 }

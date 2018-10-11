@@ -24,16 +24,17 @@ const before = {
 };
 const PRODUCT_ID = 'BCH-USD';
 
-function setLimitBuy(currentPrice, bestAsk, price, size, target, stop) {
+function setLimitBuy(currentPrice, bestAsk, params) {
+    // params.price,params.size,params.target,params.stop
     // buy at target as maker 
-    limitOrderBuy(price,size);
+    limitOrderBuy(params.price,params.size);
     // execute double sided order
-    if (Number(currentPrice) === parseFloat(price)) {
+    if (Number(currentPrice) === parseFloat(params.price)) {
          // if order executed, then trigger doublesided order
         console.log('trigger double sided order');
-        setDoubleSidedOrder(currentPrice, bestAsk, stop, target, size);
+        setDoubleSidedOrder(currentPrice, bestAsk, params);
     } else
-    if (Number(currentPrice) === stop) {
+    if (Number(currentPrice) === params.stop) {
         // cancel order
         // exit
         process.exit();
@@ -57,32 +58,33 @@ function getLimitBuy() {
 * if current price > target then set at best ask
 * if price <= stop, sell @ market(taker)
 */
-function setDoubleSidedOrder(currentPrice, bestAsk, stop, target, size) {
-    const mytarget = target;
+function setDoubleSidedOrder(currentPrice, bestAsk, params) {
+    const mytarget = params.target;
     /*
     * only change order when current target has changed
     * console.log(best_ask,target,mytarget)
     */
-    target = Math.max(bestAsk, target, mytarget);
+    params.target = Math.max(bestAsk, params.target, mytarget);
     // check if target has changed
-    if (target.valueOf() !== before.target.valueOf()) {
-        console.log('target changed', chalk.cyan(target));
-        before.target = target;
-        if (Number(currentPrice) === target) {
+    if (params.target.valueOf() !== before.target.valueOf()) {
+        console.log('target changed', chalk.cyan(params.target));
+        before.target = params.target;
+        if (Number(currentPrice) === params.target) {
             console.log('target reached');
             // exit if order is done
         } else
-        if (Number(currentPrice) <= parseFloat(stop)) {
+        if (Number(currentPrice) <= parseFloat(params.stop)) {
             // cancel order  
+            cancelOrders();
             // sell as taker
-            console.log('sell as taker', stop);
+            console.log('sell as taker', params.stop);
             // complete sell
             process.exit();
             // set order  
         }
     } else
     // not necessary
-    if (target.valueOf() === before.target.valueOf()) {
+    if (params.target.valueOf() === before.target.valueOf()) {
         // do nothing
         // console.log('same', target)
     }
@@ -93,30 +95,33 @@ function getDoubleSided() {
         loadTick('2',params);
     });
 }
-function setLimitBuyBid(currentPrice,bestBid, size, target, stop) {
+
+function Limit_Buy(currentPrice,bestBid, size, target, stop) {
     // buy at best bid
 }
 
-function getLimitBuyBid() {
+function Limit_Buy_Change() {
     // buy at best bid as it changes
+    // resets order as best bid changes
     inquirer.prompt(prompt.limitBuyBidPrompt).then((params) => {
         loadTick('3',params);
     });
 }
-function setLimitSellAsk(currentPrice,bestAsk, size, target, stop) {
+function Limit_Sell(currentPrice,bestAsk, size, target, stop) {
     // sell at best ask
 }
 
-function getLimitBuyAsk() {
+function Limit_Sell_Change() {
     // sell at best ask as it changes
+    // resets order as best ask changes
     inquirer.prompt(prompt.limitBuyAskPrompt).then((params) => {
         loadTick('4',params);
     });
 }
 
-/*
- * GDAX FUNCTIONS
- */
+/******************************************************************************************
+* GDAX FUNCTIONS
+*******************************************************************************************/
 const logger = GTT.utils.ConsoleLoggerFactory({level: 'error'});
 const gdaxConfig: GDAXConfig = {
     logger: logger,
@@ -131,7 +136,7 @@ const gdaxAPI = new GDAXExchangeAPI(gdaxConfig);
 
 function hasAuth(): boolean {
     if (gdaxAPI.checkAuth()) {
-        console.log(true);
+        console.log('Authenticated.');
         return true;
     }
     console.log('No authentication credentials were supplied, so cannot fulfil request');
@@ -157,19 +162,19 @@ function getBalances() {
     });
 }
 
+/******************************************************************************************
+* ORDER FUNCTIONS
+*******************************************************************************************/
 function getOrders() {
-    console.log(PRODUCT_ID);
     gdaxAPI.loadAllOrders(PRODUCT_ID).then((orders) => {
         if (orders.length === 0) {
-            console.log('No orders');
-        }
-        orders.forEach((order: LiveOrder) => {
-            console.log(`${order.status}\t${order.productId}\t${order.side}\t${order.price.toNumber()}\t`);
-            if (order.status === 'open') {
-                console.log(`${chalk.greenBright('OPEN ORDERS')}`);
+            console.log(chalk.redBright('No orders'));
+        } else {
+            orders.forEach((order: LiveOrder) => {
+                console.log(`${chalk.greenBright(order.status.toUpperCase())}${chalk.greenBright(' ORDERS')}`);
                 console.log(`${order.productId}\t${order.side}\t${order.price.toNumber()}\t`);
-            }
-        });
+            });
+        }
     }).catch((err) => {
         console.log('error', err);
     });
@@ -218,16 +223,16 @@ function loadTick(isMenu, params) {
                 bid = parseFloat(spread.bestBid);
                 console.log(`${chalk.green('|')} ${spread.bestBid} ${chalk.red('|')} ${spread.bestAsk}`);
                 if (isMenu === '1') {
-                    setLimitBuy(currentTicker,currentAsk,params.price,params.size,params.target,params.stop);
+                    setLimitBuy(currentTicker,currentAsk,params);
                 } else
                 if (isMenu === '2') {
-                    setDoubleSidedOrder(currentTicker,currentAsk,params.stop,params.target, params.size);
+                    setDoubleSidedOrder(currentTicker,currentAsk,params);
                 } else
                 if (isMenu === '3') {
-                    setDoubleSidedOrder(currentTicker,currentAsk,params.stop,params.target, params.size);
+                    setDoubleSidedOrder(currentTicker,currentAsk,params);
                 } else
                 if (isMenu === '4') {
-                    setDoubleSidedOrder(currentTicker,currentAsk,params.stop,params.target, params.size);
+                    setDoubleSidedOrder(currentTicker,currentAsk,params);
                 }
             }
         });
@@ -250,16 +255,21 @@ function loadTick(isMenu, params) {
     });
 }
 
-function placeOrder(order: PlaceOrderMessage) {
-    const msg = `Limit ${order.side} order for ${order.size} at ${order.price}`;
-    gdaxAPI.placeOrder(order).then((liveOrder: LiveOrder) => {
-        console.log(liveOrder);
-        console.log(msg);
-    }).catch((err) => {
-        console.log('ERROR',err);
-    });
-}
+/******************************************************************************************
+* PLACE ORDER FUNCTIONS
+*******************************************************************************************/
 
+function placeOrder(order: PlaceOrderMessage) {
+    // this places order message 
+    const msg = `Limit ${order.side} order for ${order.size} at ${order.price}`;
+    // gdaxAPI.placeOrder(order).then((liveOrder: LiveOrder) => {
+    //     console.log(liveOrder);
+    //     console.log(msg);
+    // }).catch((err) => {
+    //     console.log('ERROR',err);
+    // });
+    console.log(msg);
+}
 function limitOrderBuy(price: string, size: string) {
     // placing on order book
     const order: PlaceOrderMessage = {
@@ -273,8 +283,7 @@ function limitOrderBuy(price: string, size: string) {
         size: size,
       };
     placeOrder(order);
-  }
-
+}
 function limitOrderSell(price: string, size: string) {
     // placing on order book
     const order: PlaceOrderMessage = {
@@ -315,45 +324,46 @@ function marketOrderSell(price: string, size: string) {
     };
     placeOrder(order);
 }
-/*
+
+/******************************************************************************************
 * PRINT FUNCTIONS
-*/
+*******************************************************************************************/
 function printTicker(ticker: Ticker, quotePrec: number = 2): string {
     return `${padfloat(ticker.price, 10, quotePrec)}`;
   }
 
 function printStats(book: LiveOrderbook) {
-    // `${chalk.red('|')}${padfloat(book.state().asks[0].totalSize,5,4)} ${book.state().asks[0].price}`
-    //      +`\t${chalk.green('|')}${padfloat(book.state().bids[0].totalSize,5,4)} ${book.state().bids[0].price}`;
     let bestBid = book.state().bids[0].price;
     const oldBid = bestBid;
     bestBid = book.state().bids[0].price;
     console.log(`${bestBid}  ${oldBid}`);
   }
 
-/*
- * MAIN PROMPT CALL
- */
+/******************************************************************************************
+* MAIN PROMPT CALL
+*******************************************************************************************/
 inquirer.prompt(prompt.feedQ).then( (ans) => {
-    if (ans.choice === 'Account') {
-        gotoAccountMenu();
-    } else
-    if (ans.choice === 'Limit Buy- User') {
-        getLimitBuy();
-    } else
-    if (ans.choice === 'Double Sided Order') {
-        getDoubleSided();
-    } else
-    if (ans.choice === 'Limit Buy - Best Bid') {
-        getLimitBuyBid();
-    } else
-    if (ans.choice === 'Limit Sell - Best Ask') {
-        getLimitBuyAsk();
-    } else
-    if (ans.choice === 'exit') {
-        console.log(chalk.cyan('Good Bye 👋\n')); process.exit();
-    } else {
-        console.log('Sorry, wrong answer');
+    if (hasAuth()) {
+        if (ans.choice === 'Account') {
+            gotoAccountMenu();
+        } else
+        if (ans.choice === 'Limit Buy- User') {
+            getLimitBuy();
+        } else
+        if (ans.choice === 'Double Sided Order') {
+            getDoubleSided();
+        } else
+        if (ans.choice === 'Limit Buy - Best Bid') {
+            Limit_Buy_Change();
+        } else
+        if (ans.choice === 'Limit Sell - Best Ask') {
+            Limit_Sell_Change();
+        } else
+        if (ans.choice === 'exit') {
+            console.log(chalk.cyan('Good Bye 👋\n')); process.exit();
+        } else {
+            console.log('Sorry, wrong answer');
+        }
     }
 });
 
