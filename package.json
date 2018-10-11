@@ -29,7 +29,7 @@
     "bintrees": "1.0.2",
     "ccxt": "1.17.355",
     "chalk": "^2.4.1",
-    "dotenv": "6.0.0",
+    "dotenv": "6.1.0",
     "gdax": "0.8.0",
     "gdax-tt": "coinbase/gdax-tt",
     "inquirer": "^6.2.0",
