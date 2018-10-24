@@ -1972,9 +1972,9 @@ node-fetch@~1.7.1:
     encoding "^0.1.11"
     is-stream "^1.0.1"
 
-node@^10.8.0:
-  version "10.8.0"
-  resolved "https://registry.yarnpkg.com/node/-/node-10.8.0.tgz#493a6bba247bedbdd8143b988cb80044f94d1f79"
+node@^11.0.0:
+  version "11.0.0"
+  resolved "https://registry.yarnpkg.com/node/-/node-11.0.0.tgz#20aff1b49ec65717b1603d6d90bbb61e0cfd0b7e"
   dependencies:
     node-bin-setup "^1.0.0"
 
