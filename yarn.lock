@@ -492,9 +492,9 @@ ccxt@1.12.137:
     opencollective "1.0.3"
     qs "6.5.1"
 
-ccxt@1.17.407:
-  version "1.17.407"
-  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-1.17.407.tgz#e00b223dd1f1a4d997a3e1a30a3794dace81b386"
+ccxt@1.17.408:
+  version "1.17.408"
+  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-1.17.408.tgz#7215ff86a453f4fc0928f321ac65906dbde788ed"
   dependencies:
     crypto-js "3.1.9-1"
     fetch-ponyfill "4.1.0"
