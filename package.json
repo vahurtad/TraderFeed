@@ -61,4 +61,9 @@
   "resolutions": {
     "deasync": "^0.1.12"
   }
+   "greenkeeper": {
+    "ignore": [
+      "ccxt",
+    ]
+  }
 }
