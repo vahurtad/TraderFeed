@@ -16,7 +16,7 @@ Trader helper built on top of [GDAX TRADING TOOLKIT](https://github.com/coinbase
 # GDAX Trading toolkit
 [GDAX TT ](https://github.com/coinbase/gdax-tt)
 
-##Run
+## Run
+ Run with the command
+
     ts-node trader
-
-
