@@ -76,22 +76,12 @@ export const limitBuyBidPrompt = [
         message: 'Size',
         default: 'all'
     },
-    {
-        type: 'input',
-        name: 'target',
-        message: 'Target to Sell'
-    },
-    {
-        type: 'input',
-        name: 'stop',
-        message: 'Stop Loss'
-    }
 ];
-export const limitBuyAskPrompt = [
+export const limitSellAskPrompt = [
     {
         type: 'input',
         name: 'size',
         message: 'Size',
         default: 'all'
-    }
+    },
 ];

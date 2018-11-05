@@ -1,6 +1,8 @@
 import inquirer = require('inquirer');
 import chalk from 'chalk';
 import * as prompt from './prompts';
+// import Comparator from './util/Comparator';
+import * as moment from 'moment';
 import * as GTT from 'gdax-tt';
 import { padfloat } from 'gdax-tt/build/src/utils';
 import { LiveBookConfig, LiveOrderbook, LevelMessage, SkippedMessageEvent } from 'gdax-tt/build/src/core';
@@ -13,15 +15,18 @@ import { ZERO } from 'gdax-tt/build/src/lib/types';
 import { LiveOrder } from 'gdax-tt/build/src/lib';
 require('dotenv').config();
 
+// const comparator = new Comparator();
 const spread = {
   bestBid: '',
   bestAsk: ''
 };
 const before = {
-  ask: '',
-  bid: '',
-  target: ''
+  ask: 0,
+  bid: 0,
+  target: '',
 };
+
+// only one product avaiable to trade
 const PRODUCT_ID = 'BCH-USD';
 
 /*
@@ -37,6 +42,7 @@ function set_Limit_Buy_to_Double(currentPrice, bestAsk, params) {
   // wait for oder message
   // execute double sided order
   // needs to be changed to check if order was executed and not price equality
+  // console.log('=',comparator.equal((Number(currentPrice), parseFloat(params.price))));
   if (Number(currentPrice) === parseFloat(params.price)) {
     // if order executed, then trigger doublesided order
     console.log('trigger double sided order');
@@ -119,7 +125,24 @@ function get_Double_Sided() {
 // executes user order
 function set_Limit_Buy(currentPrice, bestBid, params) {
   // buy at best bid
+  // lower the better
+
+  /*
+  * only change order when current target has changed
+  */
+  //  const mybid = Math.min(bestBid, bid);
+  // console.log('...',bestBid, before.bid);
+  if (bestBid.valueOf() !== before.bid.valueOf() ) {
+    before.bid = bestBid;
+    // before.bid = Math.min(bestBid, before.bid);
+    console.log(before.bid);
+  } else {
+    console.log('no change', bestBid);
+  }
+
+  // limitOrderBuy(bestBid)
 }
+
 // gets user input
 function get_Limit_Buy_Change() {
   // buy at best bid as it changes
@@ -132,12 +155,21 @@ function get_Limit_Buy_Change() {
 // executes user order
 function set_Limit_Sell(currentPrice,bestAsk, params) {
   // sell at best ask
+  // higher the better
+  if (bestAsk.valueOf() !== before.ask.valueOf() ) {
+    before.ask = bestAsk;
+    // before.bid = Math.min(bestBid, before.bid);
+    console.log(before.ask);
+  } else {
+    console.log('no change', bestAsk);
+  }
+  // limitOrderSell()
 }
 // gets user input
 function get_Limit_Sell_Change() {
   // sell at best ask as it changes
   // resets order as best ask changes
-  inquirer.prompt(prompt.limitBuyAskPrompt).then((params) => {
+  inquirer.prompt(prompt.limitSellAskPrompt).then((params) => {
     loadTick('4',params);
   });
 }
@@ -222,7 +254,7 @@ function loadTick(isMenu, params) {
         switch (isMenu) {
           case '1' : set_Limit_Buy_to_Double(currentTicker,currentAsk,params); break;
           case '2' : set_Double_Sided_Order(currentTicker,currentAsk,params); break;
-          case '3' : set_Limit_Buy(currentTicker,currentAsk,params); break;
+          case '3' : set_Limit_Buy(currentTicker,currentBid,params); break;
           case '4' : set_Limit_Sell(currentTicker,currentAsk,params); break;
           default: console.log('Sorry unable to find menu item. Try again!');
         }
@@ -256,8 +288,10 @@ function getOrders() {
       console.log(chalk.redBright('No orders'));
     } else {
       orders.forEach((order: LiveOrder) => {
+        console.log();
         console.log(`${chalk.greenBright(order.status.toUpperCase())}${chalk.greenBright(' ORDERS')}`);
-        console.log(`${order.productId}\t${order.extra.type}`);
+        console.log(`${chalk.blueBright(order.productId)}\t${order.extra.type}`);
+        console.log(moment(order.extra.created_at).format('MMMM DD h:mm a'));
         console.log(`${order.extra.side}\t${order.size.toNumber()}`);
         console.log(`${'stop '}${order.extra.stop}\t${order.extra.stop_price}`);
       });
