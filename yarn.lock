@@ -583,10 +583,9 @@ ccxt@1.12.137:
     opencollective "1.0.3"
     qs "6.5.1"
 
-ccxt@1.17.449:
-  version "1.17.449"
-  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-1.17.449.tgz#a58230b621aa4f856a2e87d4a8069a92e554744b"
-  integrity sha512-NQczAs/wugDU+EBc9LADReFtLjsTZyipAALVJ7ceXazDcvV3kElh+4iQYgYWZXiicG6fwiKjHojjOLH59XVCZw==
+ccxt@1.17.464:
+  version "1.17.464"
+  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-1.17.464.tgz#ced21b162c762b36a09f2df3c8a321deebc70d6b"
   dependencies:
     crypto-js "3.1.9-1"
     fetch-ponyfill "4.1.0"
