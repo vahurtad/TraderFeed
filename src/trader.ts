@@ -359,39 +359,24 @@ function printStats(book: LiveOrderbook) {
 *******************************************************************************************/
 inquirer.prompt(prompt.feedQ).then( (ans) => {
   if (hasAuth()) {
-    if (ans.choice === 'Account') {
-      gotoAccountMenu();
-    } else
-    if (ans.choice === 'Limit Buy- User') {
-      get_Limit_Buy();
-    } else
-    if (ans.choice === 'Double Sided Order') {
-      get_Double_Sided();
-    } else
-    if (ans.choice === 'Limit Buy - Best Bid') {
-      get_Limit_Buy_Change();
-    } else
-    if (ans.choice === 'Limit Sell - Best Ask') {
-      get_Limit_Sell_Change();
-    } else
-    if (ans.choice === 'exit') {
-      console.log(chalk.cyan('Good Bye 👋\n')); process.exit();
-    } else {
-      console.log('Sorry, wrong answer');
+    switch (ans.choice) {
+      case 'Account' : gotoAccountMenu(); break;
+      case 'Limit Buy - User':  get_Limit_Buy(); break;
+      case 'Double Sided Order':  get_Double_Sided(); break;
+      case 'Limit Buy - Best Bid': get_Limit_Buy_Change(); break;
+      case 'Limit Sell - Best Ask': get_Limit_Sell_Change(); break;
+      case 'exit': console.log(chalk.cyan('Good Bye 👋\n')); process.exit(); break;
+      default:  console.log('Sorry, no menu item for that');
     }
   }
 });
 
 function gotoAccountMenu() {
   inquirer.prompt(prompt.accountMenu).then( (ans) => {
-    if (ans.more === 'Balances') {
-      getBalances();
-    } else
-    if (ans.more === 'Orders') {
-      getOrders();
-    }
-    if (ans.more === 'Auth') {
-      hasAuth();
+    switch (ans.more) {
+      case 'Balances': getBalances(); break;
+      case 'Orders': getOrders(); break;
+      default:  console.log('Sorry, no menu item for that');
     }
   });
 }
