@@ -64,7 +64,7 @@
   },
    "greenkeeper": {
     "ignore": [
-      "ccxt",
+      "ccxt"
     ]
   }
 }
