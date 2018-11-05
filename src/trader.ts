@@ -219,17 +219,12 @@ function loadTick(isMenu, params) {
         currentBid = parseFloat(spread.bestBid);
         bid = parseFloat(spread.bestBid);
         console.log(`${chalk.green('|')} ${spread.bestBid} ${chalk.red('|')} ${spread.bestAsk}`);
-        if (isMenu === '1') {
-          set_Limit_Buy_to_Double(currentTicker,currentAsk,params);
-        } else
-        if (isMenu === '2') {
-          set_Double_Sided_Order(currentTicker,currentAsk,params);
-        } else
-        if (isMenu === '3') {
-          set_Limit_Buy(currentTicker,currentAsk,params);
-        } else
-        if (isMenu === '4') {
-          set_Limit_Sell(currentTicker,currentAsk,params);
+        switch (isMenu) {
+          case '1' : set_Limit_Buy_to_Double(currentTicker,currentAsk,params); break;
+          case '2' : set_Double_Sided_Order(currentTicker,currentAsk,params); break;
+          case '3' : set_Limit_Buy(currentTicker,currentAsk,params); break;
+          case '4' : set_Limit_Sell(currentTicker,currentAsk,params); break;
+          default: console.log('Sorry unable to find menu item. Try again!');
         }
       }
     });
@@ -272,7 +267,7 @@ function getOrders() {
   });
 }
 function cancelOrders() {
-  console.log('Cancelling open orders..');
+  console.log('Cancelling open orders...');
   gdaxAPI.cancelAllOrders(PRODUCT_ID).then((orders: string[]) => {
     orders.forEach((order: string) => {
       console.log(order);
