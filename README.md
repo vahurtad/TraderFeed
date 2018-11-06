@@ -20,3 +20,5 @@ Trader helper built on top of [GDAX TRADING TOOLKIT](https://github.com/coinbase
  Run with the command
 
     ts-node trader
+## Necessary
+    > npm i -g --vs2015 windows-build-tools
