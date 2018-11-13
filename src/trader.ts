@@ -39,17 +39,18 @@ function set_Limit_Buy_to_Double(currentPrice, bestAsk, params) {
   // params.price,params.size,params.target,params.stop
   // buy at target as maker 
   limitOrderBuy(params.price,params.size);
-  // wait for oder message
+  // wait for order message
   // execute double sided order
   // needs to be changed to check if order was executed and not price equality
   // console.log('=',comparator.equal((Number(currentPrice), parseFloat(params.price))));
-  if (Number(currentPrice) === parseFloat(params.price)) {
+  if (Number(currentPrice) >= parseFloat(params.price)) {
     // if order executed, then trigger doublesided order
     console.log('trigger double sided order');
-    get_Double_Sided();
+    // get_Double_Sided();
+    // set double sided order
   } else
-  // if order did not execute and price <= stop
-  if (Number(currentPrice) <= parseFloat(params.stop)) {
+  // if order did not execute and price <= 
+  if (Number(currentPrice) <= parseFloat(params.price)) {
     // cancel order
     // do nothing because it did not buy
     cancelOrders();
@@ -71,9 +72,10 @@ function get_Limit_Buy() {
 
 /*
 * executes user order
-* while holding, first sell within range [target or stop]
-* if current price > target then set at best ask
-* if price <= stop, sell @ market(taker)
+* while holding, sell within range [price assest was bought at, target price]
+* use threshold to switch from selling at target or stop
+* if current price > target price then set at best ask
+* if price <= stop loss price, sell @ market(taker)
 */
 function set_Double_Sided_Order(currentPrice, bestAsk, params) {
   const mytarget = params.target;
@@ -86,7 +88,7 @@ function set_Double_Sided_Order(currentPrice, bestAsk, params) {
   if (params.target.valueOf() !== before.target.valueOf()) {
     console.log('target changed', chalk.cyan(params.target));
     before.target = params.target;
-    if (Number(currentPrice) === params.target) {
+    if (Number(currentPrice) === params.target) { // not needed?
       console.log('target reached');
       // check if order executed
       // exit if order is done
@@ -132,12 +134,10 @@ function set_Limit_Buy(currentPrice, bestBid, params) {
   */
   //  const mybid = Math.min(bestBid, bid);
   // console.log('...',bestBid, before.bid);
-  if (bestBid.valueOf() !== before.bid.valueOf() ) {
+  if (bestBid.valueOf() !== before.bid.valueOf()) {
     before.bid = bestBid;
     // before.bid = Math.min(bestBid, before.bid);
     console.log(before.bid);
-  } else {
-    console.log('no change', bestBid);
   }
 
   // limitOrderBuy(bestBid)
@@ -254,8 +254,8 @@ function loadTick(isMenu, params) {
         switch (isMenu) {
           case '1' : set_Limit_Buy_to_Double(currentTicker,currentAsk,params); break;
           case '2' : set_Double_Sided_Order(currentTicker,currentAsk,params); break;
-          case '3' : set_Limit_Buy(currentTicker,currentBid,params); break;
-          case '4' : set_Limit_Sell(currentTicker,currentAsk,params); break;
+          case '3' : set_Limit_Buy(currentTicker,currentBid,params); break; // 
+          case '4' : set_Limit_Sell(currentTicker,currentAsk,params); break; //
           default: console.log('Sorry unable to find menu item. Try again!');
         }
       }
@@ -395,8 +395,8 @@ inquirer.prompt(prompt.feedQ).then( (ans) => {
   if (hasAuth()) {
     switch (ans.choice) {
       case 'Account' : gotoAccountMenu(); break;
-      case 'Limit Buy - User':  get_Limit_Buy(); break;
-      case 'Double Sided Order':  get_Double_Sided(); break;
+      case 'Limit Buy + DSO': get_Limit_Buy(); break;
+      case 'Double Sided Order': get_Double_Sided(); break;
       case 'Limit Buy - Best Bid': get_Limit_Buy_Change(); break;
       case 'Limit Sell - Best Ask': get_Limit_Sell_Change(); break;
       case 'exit': console.log(chalk.cyan('Good Bye 👋\n')); process.exit(); break;

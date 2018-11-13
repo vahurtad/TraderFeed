@@ -37,36 +37,36 @@ export const limitBuyPrompt = [
     {
         type: 'input',
         name: 'size',
-        message: 'Size',
+        message: 'Asset Amount',
         default: 'all'
     },
     {
         type: 'input',
         name: 'target',
-        message: 'Target to Sell'
+        message: 'Target Price'
     },
     {
         type: 'input',
         name: 'stop',
-        message: 'Stop Loss'
+        message: 'Stop Loss Price'
     }
 ];
 export const doubleSidedPrompt = [
     {
         type: 'input',
         name: 'size',
-        message: 'Size',
+        message: 'Asset Amount',
         default: 'all'
      },
      {
         type: 'input',
         name: 'target',
-        message: 'Target to Sell'
+        message: 'Target Price'
      },
      {
         type: 'input',
         name: 'stop',
-        message: 'Stop Loss'
+        message: 'Stop Loss Price'
      }
  ];
 export const limitBuyBidPrompt = [
