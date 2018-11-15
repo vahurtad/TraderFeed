@@ -24,6 +24,7 @@ const before = {
   ask: 0,
   bid: 0,
   target: '',
+  stop: ''
 };
 
 // only one product avaiable to trade
@@ -79,24 +80,29 @@ function get_Limit_Buy() {
 */
 function set_Double_Sided_Order(current, user) {
   const mytarget = user.target;
-  // console.log(user.thresholdPrice);
   /*
   * change order between stop loss price and target price
   * when current threshold has been reached
   */
   if ((current.ticker)  <= user.thresholdPrice ) {
     // order limit using Stop Loss Price
-    // make order here
-    console.log(' order limit as Stop Loss Price');
-    if ((current.ticker) >= user.target ) {
-      // order executed
-      console.log(' Stop Loss Price Executed');
+    if (user.stop !== before.stop) {
+      before.stop = user.stop;
+      // make order here
+      console.log(' order limit as Stop Loss Price', chalk.bgWhite.bold.magenta(user.stop));
+    } else
+    if ((current.ticker) >= user.stop ) {
+      // wait for oder to execute
+      console.log(' Stop Loss Price Executed', user.stop);
       process.exit();
     }
   } else
   if (current.ticker > user.thresholdPrice ) {
-    // order limit using Target Price
-    console.log('order limit as Target Price');
+    if ( user.target !== before.target) {
+      before.target = user.target;
+      // make order here
+      console.log(' order limit as Target Price', chalk.bgWhite.bold.magenta(user.target));
+    } else
     if (current.ticker === parseFloat(user.target) ) {
       // if order not executed use spread
       (current.spread > 0.01)
@@ -104,39 +110,20 @@ function set_Double_Sided_Order(current, user) {
       user.target = current.ask - .01
       :
       user.target = current.ask;
-      // make order here
-    } else
-    if (current.ticker > parseFloat(user.target) ) {
-      console.log(current.ticker , parseFloat(user.target) );
-      // oder has been executed
-      console.log(' Target PriceExecuted');
-      process.exit();
+
+      if ( user.target !== before.target) {
+        before.target = user.target;
+        // make order here
+        console.log(' order limit as Target Price', chalk.bgWhite.bold.magenta(user.target));
+      } else
+      if (current.ticker > parseFloat(user.target) ) {
+        console.log(current.ticker , parseFloat(user.target) );
+        // wait for oder to execute
+        console.log(' Target Price Executed', user.target);
+        process.exit();
+      }
     }
   }
-  // params.target = Math.max(bestAsk, params.target, mytarget);
-  // // check if target has changed
-  // if (params.target.valueOf() !== before.target.valueOf()) {
-  //   console.log('target changed', chalk.cyan(params.target));
-  //   before.target = params.target;
-  //   if (Number(currentPrice) === params.target) { // not needed?
-  //     console.log('target reached');
-  //     // check if order executed
-  //     // exit if order is done
-  //   } else
-  //   if (Number(currentPrice) <= parseFloat(params.stop)) {
-  //     // cancel order  
-  //     cancelOrders();
-  //     // sell as taker at current price of ticker
-  //     console.log('sell as taker', params.stop);
-  //     // need to have a spread for selling
-  //     // sells according to set size
-  //     // need prompt here asking to sell all or an amount
-  //     marketOrderSell(params.size);
-  //     // complete sell
-  //     process.exit();
-  //     // set order  
-  //   }
-  // } 
 }
 
 /* 
@@ -145,7 +132,6 @@ function set_Double_Sided_Order(current, user) {
 function get_Double_Sided() {
   // executes when holding
   inquirer.prompt(prompt.doubleSidedPrompt).then( (params) => {
-    console.log(params)
     get_Threshold_Price(params);
     loadTick('2',params);
   });
@@ -278,9 +264,8 @@ function loadTick(isMenu, params) {
         currentAsk = parseFloat(spread.bestAsk);
         currentBid = parseFloat(spread.bestBid);
         current = {ask: currentAsk, bid: currentBid, spread: parseFloat(newSpread), ticker: parseFloat(newTicker)};
-
-        console.log(`${chalk.green('|')} ${spread.bestBid} ${chalk.red('|')} ${spread.bestAsk}`);
-        // console.log(current, '.');
+        console.log(`${chalk.green('|BID')} ${spread.bestBid} ${chalk.red('|ASK')} ${spread.bestAsk}`);
+        // console.log(`${chalk.green('|')} ${spread.bestBid} ${chalk.red('|')} ${spread.bestAsk}`);
         switch (isMenu) {
           case '1' : set_Limit_Buy_to_Double(current,params); break;
           case '2' : set_Double_Sided_Order(current,params); break;
@@ -330,6 +315,7 @@ function getOrders() {
     console.log('error', err);
   });
 }
+
 function cancelOrders() {
   console.log('Cancelling open orders...');
   gdaxAPI.cancelAllOrders(PRODUCT_ID).then((orders: string[]) => {
@@ -340,8 +326,14 @@ function cancelOrders() {
     console.log('error', err);
   });
 }
+
+/**
+ * Only one of `size` and `funds` are required for market and limit orders (the other can be explicitly assigned null or undefined). However,
+ * it is advisable to include both. If funds is not specified, the entire user balance is placed on hold until the order is filled which
+ * will prevent other orders from being placed in the interim. This can cause issues for HFT algorithms for example.
+ * https://github.com/coinbase/gdax-tt/issues/199
+ */
 function placeOrder(order: PlaceOrderMessage) {
-  // this places order message 
   const msg = `Limit ${order.side} order for ${order.size} at ${order.price}`;
   // gdaxAPI.placeOrder(order).then((liveOrder: LiveOrder) => {
   //     console.log(liveOrder);
@@ -425,6 +417,10 @@ function get_Threshold_Price(params) {
 
   console.log(chalk.bgWhite.red('Threshold Price'), chalk.red(params.thresholdPrice));
 }
+
+// function get_Max_Funds() {
+
+// }
 
 /******************************************************************************************
 * MAIN PROMPT CALL
