@@ -18,6 +18,14 @@ const validateNum = (v) => {
   }
 };
 
+const validateDecimal = (v) => {
+  const valid = v.match(/^(0\d*)?(\.\d+)?(?<=\d)$/i);
+  if (valid) {
+    return true;
+  }
+  return 'Please enter a decimal < 1';
+};
+
 export const feedQ = [{
     type: 'rawlist',
     name: 'choice',
@@ -93,7 +101,8 @@ export const doubleSidedPrompt = [
      {
         type: 'input',
         name: 'threshold',
-        message: 'Threshold to Switch'
+        message: 'Threshold to Switch',
+        validate: validateDecimal
      }
  ];
 export const limitBuyBidPrompt = [
