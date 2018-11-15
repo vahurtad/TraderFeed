@@ -79,14 +79,12 @@ function get_Limit_Buy() {
 */
 function set_Double_Sided_Order(current, user) {
   const mytarget = user.target;
-  const difference = user.target - user.stop;
-  const thresholdPrice = Number(difference * user.threshold) + Number(user.stop);
-  console.log(chalk.bgMagenta.blue('Threshold Price'),thresholdPrice);
+  // console.log(user.thresholdPrice);
   /*
   * change order between stop loss price and target price
   * when current threshold has been reached
   */
-  if ((current.ticker)  <= thresholdPrice ) {
+  if ((current.ticker)  <= user.thresholdPrice ) {
     // order limit using Stop Loss Price
     // make order here
     console.log(' order limit as Stop Loss Price');
@@ -96,7 +94,7 @@ function set_Double_Sided_Order(current, user) {
       process.exit();
     }
   } else
-  if (current.ticker > thresholdPrice ) {
+  if (current.ticker > user.thresholdPrice ) {
     // order limit using Target Price
     console.log('order limit as Target Price');
     if (current.ticker === parseFloat(user.target) ) {
@@ -147,6 +145,7 @@ function set_Double_Sided_Order(current, user) {
 function get_Double_Sided() {
   // executes when holding
   inquirer.prompt(prompt.doubleSidedPrompt).then( (params) => {
+    get_Threshold_Price(params);
     loadTick('2',params);
   });
 }
@@ -159,8 +158,6 @@ function set_Limit_Buy(current, user) {
   /*
   * only change order when current target has changed
   */
-  //  const mybid = Math.min(bestBid, bid);
-  // console.log('...',bestBid, before.bid);
   if (current.bid.valueOf() !== before.bid.valueOf()) {
     before.bid = current.bid;
     // before.bid = Math.min(bestBid, before.bid);
@@ -407,7 +404,7 @@ function marketOrderSell(size: string) {
 }
 
 /******************************************************************************************
-* PRINT FUNCTIONS
+* HELPER FUNCTIONS
 *******************************************************************************************/
 function printTicker(ticker: Ticker, quotePrec: number = 2): string {
   return `${padfloat(ticker.price, 10, quotePrec)}`;
@@ -418,6 +415,14 @@ function printStats(book: LiveOrderbook) {
   const oldBid = bestBid;
   bestBid = book.state().bids[0].price;
   console.log(`${bestBid}  ${oldBid}`);
+}
+
+function get_Threshold_Price(params) {
+  const difference = params.target - params.stop;
+  const thresholdPrice = Number(difference * params.threshold) + Number(params.stop);
+  params.thresholdPrice = thresholdPrice;
+
+  console.log(chalk.bgWhite.red('Threshold Price'), chalk.red(params.thresholdPrice));
 }
 
 /******************************************************************************************
