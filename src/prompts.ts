@@ -2,6 +2,22 @@
  * PROMPTS
  */
 
+const validateNum = (v) => {
+  console.log(v);
+  if (v === '') {
+    console.log('all');
+    return true;
+  } else
+  if (v === 'all') {
+    return true;
+  } else
+  if (!isNaN(parseFloat(v))) {
+    return true;
+  } else {
+    console.log('Please type a number or leave blank for all');
+  }
+};
+
 export const feedQ = [{
     type: 'rawlist',
     name: 'choice',
@@ -61,7 +77,8 @@ export const doubleSidedPrompt = [
         type: 'input',
         name: 'size',
         message: 'Asset Amount',
-        default: 'all'
+        default: 'all',
+        validate: validateNum
      },
      {
         type: 'input',

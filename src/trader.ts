@@ -145,6 +145,7 @@ function set_Double_Sided_Order(current, user) {
 function get_Double_Sided() {
   // executes when holding
   inquirer.prompt(prompt.doubleSidedPrompt).then( (params) => {
+    console.log(params)
     get_Threshold_Price(params);
     loadTick('2',params);
   });
