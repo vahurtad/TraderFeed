@@ -90,6 +90,7 @@ function set_Double_Sided_Order(current, user) {
       before.stop = user.stop;
       // make order here
       console.log(' order limit as Stop Loss Price', chalk.bgWhite.bold.magenta(user.stop));
+      limitOrderSell(user.stop, user.size);
     } else
     if ((current.ticker) >= user.stop ) {
       // wait for oder to execute
@@ -102,6 +103,7 @@ function set_Double_Sided_Order(current, user) {
       before.target = user.target;
       // make order here
       console.log(' order limit as Target Price', chalk.bgWhite.bold.magenta(user.target));
+      limitOrderSell(user.stop, user.size);
     } else
     if (current.ticker === parseFloat(user.target) ) {
       // if order not executed use spread
@@ -115,6 +117,7 @@ function set_Double_Sided_Order(current, user) {
         before.target = user.target;
         // make order here
         console.log(' order limit as Target Price', chalk.bgWhite.bold.magenta(user.target));
+        limitOrderSell(user.stop, user.size);
       } else
       if (current.ticker > parseFloat(user.target) ) {
         console.log(current.ticker , parseFloat(user.target) );

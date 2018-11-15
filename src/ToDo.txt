@@ -7,6 +7,10 @@
 3. use bestAsk to optimize target order - if ticker >= original target and if ordered not executed then 
     (if spread > .01, make target = bestAsk - .01 else target = bestAsk ) 
     else order should have been executed
+
 4. remove ticker price - ticker price is not necessary to optimize?
 
 5. add threshold as decimals to menu item
+----------
+6. added validate to threshold for decimals > 1
+7. added validate for asset amount to all or a number, not letters 
