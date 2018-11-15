@@ -8,7 +8,7 @@ export const feedQ = [{
     message: 'Which?',
     choices: [
         'Account',
-        'Limit Buy - User',
+        'Limit Buy + DSO',
         'Double Sided Order',
         'Limit Buy - Best Bid',
         'Limit Sell - Best Ask',
@@ -49,6 +49,11 @@ export const limitBuyPrompt = [
         type: 'input',
         name: 'stop',
         message: 'Stop Loss Price'
+    },
+    {
+       type: 'input',
+       name: 'threshold',
+       message: 'Threshold to Switch'
     }
 ];
 export const doubleSidedPrompt = [
@@ -67,13 +72,18 @@ export const doubleSidedPrompt = [
         type: 'input',
         name: 'stop',
         message: 'Stop Loss Price'
+     },
+     {
+        type: 'input',
+        name: 'threshold',
+        message: 'Threshold to Switch'
      }
  ];
 export const limitBuyBidPrompt = [
     {
         type: 'input',
         name: 'size',
-        message: 'Size',
+        message: 'Asset Amount',
         default: 'all'
     },
 ];
@@ -81,7 +91,7 @@ export const limitSellAskPrompt = [
     {
         type: 'input',
         name: 'size',
-        message: 'Size',
+        message: 'Asset Amount',
         default: 'all'
     },
 ];

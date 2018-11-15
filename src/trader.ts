@@ -35,22 +35,22 @@ const PRODUCT_ID = 'BCH-USD';
 * if current price > target then set at best ask
 * if stop did not execute, then sell @ market?
 */
-function set_Limit_Buy_to_Double(currentPrice, bestAsk, params) {
-  // params.price,params.size,params.target,params.stop
+function set_Limit_Buy_to_Double(current, user) {
+  // user.price,user.size,user.target,user.stop
   // buy at target as maker 
-  limitOrderBuy(params.price,params.size);
+  limitOrderBuy(current.ticker,user.size);
   // wait for order message
   // execute double sided order
   // needs to be changed to check if order was executed and not price equality
-  // console.log('=',comparator.equal((Number(currentPrice), parseFloat(params.price))));
-  if (Number(currentPrice) >= parseFloat(params.price)) {
+  // console.log('=',comparator.equal((Number(currentPrice), parseFloat(user.price))));
+  if (Number(current.ticker) >= parseFloat(user.price)) {
     // if order executed, then trigger doublesided order
     console.log('trigger double sided order');
     // get_Double_Sided();
     // set double sided order
   } else
   // if order did not execute and price <= 
-  if (Number(currentPrice) <= parseFloat(params.price)) {
+  if (Number(current.ticker) <= parseFloat(user.price)) {
     // cancel order
     // do nothing because it did not buy
     cancelOrders();
@@ -77,41 +77,68 @@ function get_Limit_Buy() {
 * if current price > target price then set at best ask
 * if price <= stop loss price, sell @ market(taker)
 */
-function set_Double_Sided_Order(currentPrice, bestAsk, params) {
-  const mytarget = params.target;
+function set_Double_Sided_Order(current, user) {
+  const mytarget = user.target;
+  const difference = user.target - user.stop;
+  const thresholdPrice = Number(difference * user.threshold) + Number(user.stop);
+  console.log(chalk.bgMagenta.blue('Threshold Price'),thresholdPrice);
   /*
-  * only change order when current target has changed
-  * console.log(best_ask,target,mytarget)
+  * change order between stop loss price and target price
+  * when current threshold has been reached
   */
-  params.target = Math.max(bestAsk, params.target, mytarget);
-  // check if target has changed
-  if (params.target.valueOf() !== before.target.valueOf()) {
-    console.log('target changed', chalk.cyan(params.target));
-    before.target = params.target;
-    if (Number(currentPrice) === params.target) { // not needed?
-      console.log('target reached');
-      // check if order executed
-      // exit if order is done
-    } else
-    if (Number(currentPrice) <= parseFloat(params.stop)) {
-      // cancel order  
-      cancelOrders();
-      // sell as taker at current price of ticker
-      console.log('sell as taker', params.stop);
-      // need to have a spread for selling
-      // sells according to set size
-      // need prompt here asking to sell all or an amount
-      marketOrderSell(params.size);
-      // complete sell
+  if ((current.ticker)  <= thresholdPrice ) {
+    // order limit using Stop Loss Price
+    // make order here
+    console.log(' order limit as Stop Loss Price');
+    if ((current.ticker) >= user.target ) {
+      // order executed
+      console.log(' Stop Loss Price Executed');
       process.exit();
-      // set order  
     }
   } else
-  // not necessary
-  if (params.target.valueOf() === before.target.valueOf()) {
-    // do nothing
-    // console.log('same', target)
+  if (current.ticker > thresholdPrice ) {
+    // order limit using Target Price
+    console.log('order limit as Target Price');
+    if (current.ticker === parseFloat(user.target) ) {
+      // if order not executed use spread
+      (current.spread > 0.01)
+      ?
+      user.target = current.ask - .01
+      :
+      user.target = current.ask;
+      // make order here
+    } else
+    if (current.ticker > parseFloat(user.target) ) {
+      console.log(current.ticker , parseFloat(user.target) );
+      // oder has been executed
+      console.log(' Target PriceExecuted');
+      process.exit();
+    }
   }
+  // params.target = Math.max(bestAsk, params.target, mytarget);
+  // // check if target has changed
+  // if (params.target.valueOf() !== before.target.valueOf()) {
+  //   console.log('target changed', chalk.cyan(params.target));
+  //   before.target = params.target;
+  //   if (Number(currentPrice) === params.target) { // not needed?
+  //     console.log('target reached');
+  //     // check if order executed
+  //     // exit if order is done
+  //   } else
+  //   if (Number(currentPrice) <= parseFloat(params.stop)) {
+  //     // cancel order  
+  //     cancelOrders();
+  //     // sell as taker at current price of ticker
+  //     console.log('sell as taker', params.stop);
+  //     // need to have a spread for selling
+  //     // sells according to set size
+  //     // need prompt here asking to sell all or an amount
+  //     marketOrderSell(params.size);
+  //     // complete sell
+  //     process.exit();
+  //     // set order  
+  //   }
+  // } 
 }
 
 /* 
@@ -125,7 +152,7 @@ function get_Double_Sided() {
 }
 
 // executes user order
-function set_Limit_Buy(currentPrice, bestBid, params) {
+function set_Limit_Buy(current, user) {
   // buy at best bid
   // lower the better
 
@@ -134,8 +161,8 @@ function set_Limit_Buy(currentPrice, bestBid, params) {
   */
   //  const mybid = Math.min(bestBid, bid);
   // console.log('...',bestBid, before.bid);
-  if (bestBid.valueOf() !== before.bid.valueOf()) {
-    before.bid = bestBid;
+  if (current.bid.valueOf() !== before.bid.valueOf()) {
+    before.bid = current.bid;
     // before.bid = Math.min(bestBid, before.bid);
     console.log(before.bid);
   }
@@ -153,15 +180,15 @@ function get_Limit_Buy_Change() {
 }
 
 // executes user order
-function set_Limit_Sell(currentPrice,bestAsk, params) {
+function set_Limit_Sell(current, user) {
   // sell at best ask
   // higher the better
-  if (bestAsk.valueOf() !== before.ask.valueOf() ) {
-    before.ask = bestAsk;
+  if (current.ask.valueOf() !== before.ask.valueOf() ) {
+    before.ask = current.ask;
     // before.bid = Math.min(bestBid, before.bid);
     console.log(before.ask);
   } else {
-    console.log('no change', bestAsk);
+    console.log('no change', current.ask);
   }
   // limitOrderSell()
 }
@@ -224,7 +251,7 @@ function loadTick(isMenu, params) {
   let currentTicker = ZERO;
   let currentAsk = 0;
   let currentBid = 0;
-  let bid = 0;
+  let current = {};
   getSubscribedFeeds(gdaxConfig, [PRODUCT_ID]).then((feed: GDAXFeed) => {
     const config: LiveBookConfig = {
       product: PRODUCT_ID,
@@ -239,23 +266,28 @@ function loadTick(isMenu, params) {
     });
     book.on('LiveOrderbook.ticker', (ticker: Ticker) => {
       currentTicker = ticker.price;
-      console.log(`${chalk.green('💰 ')} ${ticker.price.toFixed(2)} ${chalk.green(' 💰')} `);
+      console.log(`${chalk.green('💰 ')} ${currentTicker.toFixed(2)} ${chalk.green(' 💰')} `);
     });
     book.on('LiveOrderbook.update', (msg: LevelMessage) => {
       const highestBid = book.book.highestBid.price.toFixed(2);
       const lowestAsk = book.book.lowestAsk.price.toFixed(2);
+      const newSpread = (Number(lowestAsk) - Number(highestBid)).toFixed(2);
+      const newTicker = currentTicker.toFixed(2);
+
       if (highestBid.valueOf() !== spread.bestBid.valueOf() || lowestAsk.valueOf() !== spread.bestAsk.valueOf()) {
         spread.bestBid = highestBid;
         spread.bestAsk = lowestAsk;
         currentAsk = parseFloat(spread.bestAsk);
         currentBid = parseFloat(spread.bestBid);
-        bid = parseFloat(spread.bestBid);
+        current = {ask: currentAsk, bid: currentBid, spread: parseFloat(newSpread), ticker: parseFloat(newTicker)};
+
         console.log(`${chalk.green('|')} ${spread.bestBid} ${chalk.red('|')} ${spread.bestAsk}`);
+        // console.log(current, '.');
         switch (isMenu) {
-          case '1' : set_Limit_Buy_to_Double(currentTicker,currentAsk,params); break;
-          case '2' : set_Double_Sided_Order(currentTicker,currentAsk,params); break;
-          case '3' : set_Limit_Buy(currentTicker,currentBid,params); break; // 
-          case '4' : set_Limit_Sell(currentTicker,currentAsk,params); break; //
+          case '1' : set_Limit_Buy_to_Double(current,params); break;
+          case '2' : set_Double_Sided_Order(current,params); break;
+          case '3' : set_Limit_Buy(current,params); break; // 
+          case '4' : set_Limit_Sell(current,params); break; //
           default: console.log('Sorry unable to find menu item. Try again!');
         }
       }

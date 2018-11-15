@@ -1,11 +1,12 @@
-1. asset amount - has to be within range
+1. asset amount - has to be within range, check balances
    
     set_Double_Sided_Order
-2. percentage threshold - threshold to determine when to switch between stop loss order and target order, using ticker
+2. percentage threshold - threshold to determine when to switch between stop loss order and target order,
+ using ticker. This adds threshold to menu.
 
 3. use bestAsk to optimize target order - if ticker >= original target and if ordered not executed then 
     (if spread > .01, make target = bestAsk - .01 else target = bestAsk ) 
     else order should have been executed
-4. remove ticker price - ticker price is not necessary to optimize
+4. remove ticker price - ticker price is not necessary to optimize?
 
 5. add threshold as decimals to menu item
