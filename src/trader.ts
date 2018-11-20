@@ -28,7 +28,18 @@ const before = {
 };
 
 // only one product avaiable to trade
-const PRODUCT_ID = 'BCH-USD';
+const PRODUCT_ID = 'ETH-USD';
+
+/* 
+* gets user input
+* to buy and use double sided order
+*/
+function get_Limit_Buy() {
+  inquirer.prompt(prompt.limitBuyPrompt).then( (params) => {
+    console.log('Price to Buy:', chalk.green(params.price));
+    loadTick('1',params);
+  });
+}
 
 /*
 * executes user order
@@ -62,12 +73,15 @@ function set_Limit_Buy_to_Double(current, user) {
 
 /* 
 * gets user input
-* to buy and use double sided order
 */
-function get_Limit_Buy() {
-  inquirer.prompt(prompt.limitBuyPrompt).then( (params) => {
-    console.log('Price to Buy:', chalk.green(params.price));
-    loadTick('1',params);
+function get_Double_Sided() {
+  // executes when holding
+  inquirer.prompt(prompt.doubleSidedPrompt).then( (params) => {
+    if (params.size === 'all') {
+
+    }
+    get_Threshold_Price(params);
+    loadTick('2',params);
   });
 }
 
@@ -129,14 +143,12 @@ function set_Double_Sided_Order(current, user) {
   }
 }
 
-/* 
-* gets user input
-*/
-function get_Double_Sided() {
-  // executes when holding
-  inquirer.prompt(prompt.doubleSidedPrompt).then( (params) => {
-    get_Threshold_Price(params);
-    loadTick('2',params);
+// gets user input
+function get_Limit_Buy_Change() {
+  // buy at best bid as it changes
+  // resets order as best bid changes
+  inquirer.prompt(prompt.limitBuyBidPrompt).then((params) => {
+    loadTick('3',params);
   });
 }
 
@@ -158,11 +170,11 @@ function set_Limit_Buy(current, user) {
 }
 
 // gets user input
-function get_Limit_Buy_Change() {
-  // buy at best bid as it changes
-  // resets order as best bid changes
-  inquirer.prompt(prompt.limitBuyBidPrompt).then((params) => {
-    loadTick('3',params);
+function get_Limit_Sell_Change() {
+  // sell at best ask as it changes
+  // resets order as best ask changes
+  inquirer.prompt(prompt.limitSellAskPrompt).then((params) => {
+    loadTick('4',params);
   });
 }
 
@@ -178,14 +190,6 @@ function set_Limit_Sell(current, user) {
     console.log('no change', current.ask);
   }
   // limitOrderSell()
-}
-// gets user input
-function get_Limit_Sell_Change() {
-  // sell at best ask as it changes
-  // resets order as best ask changes
-  inquirer.prompt(prompt.limitSellAskPrompt).then((params) => {
-    loadTick('4',params);
-  });
 }
 
 /******************************************************************************************
@@ -213,7 +217,8 @@ function hasAuth(): boolean {
 }
 
 function getBalances() {
-  gdaxAPI.loadBalances().then((balances) => {
+  const balanceANDfunds = [];
+  return gdaxAPI.loadBalances().then((balances) => {
     for (const b in balances) {
       for (const c in balances[b]) {
         if (c === 'USD') {
@@ -221,14 +226,21 @@ function getBalances() {
           * balance - total funds in the account
           * available - funds available to withdraw or trade
           */
-          console.log('💵 USD 💵');
-          console.log(`balance: ${balances[b][c].balance.toNumber()} -- available: ${balances[b][c].available.toNumber()}`);
+          // console.log('💵 USD 💵');
+          // console.log(`balance: ${balances[b][c].balance.toNumber()} -- available: ${balances[b][c].available.toNumber()}`);
+          balanceANDfunds.push(balances[b][c]);
         }
       }
     }
+    return balanceANDfunds;
   }).catch((err) => {
     console.log('error', err);
   });
+}
+
+function printBalances() {
+  getBalances().then((v)=>{console.log(v)});
+
 }
 
 /******************************************************************************************
@@ -445,7 +457,7 @@ inquirer.prompt(prompt.feedQ).then( (ans) => {
 function gotoAccountMenu() {
   inquirer.prompt(prompt.accountMenu).then( (ans) => {
     switch (ans.more) {
-      case 'Balances': getBalances(); break;
+      case 'Balances': printBalances(); break;
       case 'Orders': getOrders(); break;
       default:  console.log('Sorry, no menu item for that');
     }
