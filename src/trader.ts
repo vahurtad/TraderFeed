@@ -13,6 +13,8 @@ import { Ticker } from 'gdax-tt/build/src/exchanges/PublicExchangeAPI';
 import { getSubscribedFeeds } from 'gdax-tt/build/src/factories/gdaxFactories';
 import { ZERO } from 'gdax-tt/build/src/lib/types';
 import { LiveOrder } from 'gdax-tt/build/src/lib';
+import { gdax } from 'ccxt';
+import { Balances } from 'gdax-tt/build/src/exchanges/AuthenticatedExchangeAPI';
 require('dotenv').config();
 
 // const comparator = new Comparator();
@@ -76,12 +78,12 @@ function set_Limit_Buy_to_Double(current, user) {
 */
 function get_Double_Sided() {
   // executes when holding
-  inquirer.prompt(prompt.doubleSidedPrompt).then( (params) => {
-    if (params.size === 'all') {
-
-    }
-    get_Threshold_Price(params);
-    loadTick('2',params);
+  inquirer.prompt(prompt.doubleSidedPrompt).then((params) => {
+    return get_Threshold_Price(params);
+  }).then((params) => {
+    return get_Asset_Size(params);
+  }).then((params) => {
+    console.log(params);
   });
 }
 
@@ -218,17 +220,11 @@ function hasAuth(): boolean {
 
 function getBalances() {
   const balanceANDfunds = [];
-  return gdaxAPI.loadBalances().then((balances) => {
-    for (const b in balances) {
-      for (const c in balances[b]) {
+  return gdaxAPI.loadBalances().then((balances: Balances) => {
+    for (const profile in balances) {
+      for (const c in balances[profile]) {
         if (c === 'USD') {
-          /*
-          * balance - total funds in the account
-          * available - funds available to withdraw or trade
-          */
-          // console.log('💵 USD 💵');
-          // console.log(`balance: ${balances[b][c].balance.toNumber()} -- available: ${balances[b][c].available.toNumber()}`);
-          balanceANDfunds.push(balances[b][c]);
+          balanceANDfunds.push(balances[profile][c]);
         }
       }
     }
@@ -239,8 +235,14 @@ function getBalances() {
 }
 
 function printBalances() {
-  getBalances().then((v)=>{console.log(v)});
-
+  getBalances().then((total) => {
+    /*
+    * balance - total funds in the account
+    * available - funds available to withdraw or trade
+    */
+  console.log('💵\tUSD\t💵');
+  console.log(`balance: ${total[0].balance.toNumber()} -- available: ${total[0].available.toNumber()}`);
+  });
 }
 
 /******************************************************************************************
@@ -431,11 +433,20 @@ function get_Threshold_Price(params) {
   params.thresholdPrice = thresholdPrice;
 
   console.log(chalk.bgWhite.red('Threshold Price'), chalk.red(params.thresholdPrice));
+  return params;
 }
 
-// function get_Max_Funds() {
-
-// }
+function get_Asset_Size(params) {
+  params.size = params.size.replace(/\s/g,'');
+  if (params.size === 'all' || params.size === '' || params.size.length === 0) {
+    return getBalances().then((total) => {
+      params.size = total[0].balance.toNumber();
+      return params;
+    });
+  } else {
+    return params;
+  }
+}
 
 /******************************************************************************************
 * MAIN PROMPT CALL

@@ -3,12 +3,8 @@
  */
 
 const validateNum = (v) => {
-  console.log(v);
-  if (v === '') {
-    console.log('all');
-    return true;
-  } else
-  if (v === 'all') {
+  v = v.replace(/\s/g,'');
+  if (v === '' || v === 'all' || v.length === 0) {
     return true;
   } else
   if (!isNaN(parseFloat(v))) {
