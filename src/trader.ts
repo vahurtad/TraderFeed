@@ -253,8 +253,6 @@ function printBalances() {
         // }
       }
     }
-    // console.log('💵\tUSD\t💵');
-    // console.log(`balance: ${total[0].balance.toNumber()} -- available: ${total[0].available.toNumber()}`);
   });
 }
 
@@ -453,7 +451,7 @@ function get_Asset_Size(params) {
   params.size = params.size.replace(/\s/g,'');
   if (params.size === 'all' || params.size === '' || params.size.length === 0) {
     return getBalances().then((total) => {
-      params.size = total[0].balance.toNumber();
+      params.size = total[1].funds.balance.toNumber();
       return params;
     });
   } else {
