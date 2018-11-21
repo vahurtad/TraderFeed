@@ -1,7 +1,6 @@
 import inquirer = require('inquirer');
 import chalk from 'chalk';
 import * as prompt from './prompts';
-// import Comparator from './util/Comparator';
 import * as moment from 'moment';
 import * as GTT from 'gdax-tt';
 import { padfloat } from 'gdax-tt/build/src/utils';
@@ -13,11 +12,10 @@ import { Ticker } from 'gdax-tt/build/src/exchanges/PublicExchangeAPI';
 import { getSubscribedFeeds } from 'gdax-tt/build/src/factories/gdaxFactories';
 import { ZERO } from 'gdax-tt/build/src/lib/types';
 import { LiveOrder } from 'gdax-tt/build/src/lib';
-import { gdax } from 'ccxt';
 import { Balances } from 'gdax-tt/build/src/exchanges/AuthenticatedExchangeAPI';
 require('dotenv').config();
 
-// const comparator = new Comparator();
+// const ctx = new chalk.constructor({level: 3});
 const spread = {
   bestBid: '',
   bestAsk: ''
@@ -83,7 +81,7 @@ function get_Double_Sided() {
   }).then((params) => {
     return get_Asset_Size(params);
   }).then((params) => {
-    console.log(params);
+    loadTick('2',params);
   });
 }
 
@@ -105,7 +103,7 @@ function set_Double_Sided_Order(current, user) {
     if (user.stop !== before.stop) {
       before.stop = user.stop;
       // make order here
-      console.log(' order limit as Stop Loss Price', chalk.bgWhite.bold.magenta(user.stop));
+      console.log(chalk.keyword('orange').underline('order limit as Stop Loss Price', chalk.bgWhite.bold.magenta(user.stop)));
       limitOrderSell(user.stop, user.size);
     } else
     if ((current.ticker) >= user.stop ) {
@@ -118,8 +116,8 @@ function set_Double_Sided_Order(current, user) {
     if ( user.target !== before.target) {
       before.target = user.target;
       // make order here
-      console.log(' order limit as Target Price', chalk.bgWhite.bold.magenta(user.target));
-      limitOrderSell(user.stop, user.size);
+      console.log('order limit as Target Price', chalk.bgWhite.bold.magenta(user.target));
+      limitOrderSell(user.target, user.size);
     } else
     if (current.ticker === parseFloat(user.target) ) {
       // if order not executed use spread
@@ -351,7 +349,7 @@ function cancelOrders() {
  * https://github.com/coinbase/gdax-tt/issues/199
  */
 function placeOrder(order: PlaceOrderMessage) {
-  const msg = `Limit ${order.side} order for ${order.size} at ${order.price}`;
+  const msg = `PLACED: Limit ${order.side} order for ${order.size} at ${order.price}`;
   // gdaxAPI.placeOrder(order).then((liveOrder: LiveOrder) => {
   //     console.log(liveOrder);
   //     console.log(msg);
