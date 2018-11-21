@@ -10,7 +10,7 @@ const validateAsset = (v) => {
   if (!isNaN(parseFloat(v))) {
     return true;
   } else {
-    console.log('Please type a number or leave blank for all');
+    return 'Please type a number or leave blank for all';
   }
 };
 
@@ -18,7 +18,7 @@ const validateNumber = (v) => {
     if (!isNaN(parseFloat(v))) {
       return true;
     } else {
-      console.log('Please type a number');
+      return 'Please type a number';
     }
   };
 
@@ -56,7 +56,7 @@ export const accountMenu = [{
     ]
 }];
 
-export const limitBuyPrompt = [
+export const limitBuytoDSPrompt = [
     {
         type: 'input',
         name: 'price',

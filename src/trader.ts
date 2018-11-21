@@ -34,9 +34,13 @@ const PRODUCT_ID = 'ETH-USD';
 * gets user input
 * to buy and use double sided order
 */
-function get_Limit_Buy() {
-  inquirer.prompt(prompt.limitBuyPrompt).then( (params) => {
+function get_Limit_Buy_to_DS() {
+  inquirer.prompt(prompt.limitBuytoDSPrompt).then( (params) => {
     console.log('Price to Buy:', chalk.green(params.price));
+    return get_Threshold_Price(params);
+  }).then((params) => {
+    return get_Asset_Size(params);
+  }).then((params) => {
     loadTick('1',params);
   });
 }
@@ -48,10 +52,14 @@ function get_Limit_Buy() {
 * if stop did not execute, then sell @ market?
 */
 function set_Limit_Buy_to_Double(current, user) {
-  // user.price,user.size,user.target,user.stop
   // buy at target as maker 
-  limitOrderBuy(current.ticker,user.size);
-  // wait for order message
+  limitOrderBuy(user.target, user.size);
+  // wait for order message OR check ticker OR check funds
+  if ((current.ticker) >= user.target ) {
+    console.log('Target Price Executed', user.stop);
+    // execute double sided order
+
+  }
   // execute double sided order
   // needs to be changed to check if order was executed and not price equality
   // console.log('=',comparator.equal((Number(currentPrice), parseFloat(user.price))));
@@ -107,7 +115,6 @@ function set_Double_Sided_Order(current, user) {
       limitOrderSell(user.stop, user.size);
     } else
     if ((current.ticker) >= user.stop ) {
-      // wait for oder to execute
       console.log(' Stop Loss Price Executed', user.stop);
       process.exit();
     }
@@ -135,7 +142,6 @@ function set_Double_Sided_Order(current, user) {
       } else
       if (current.ticker > parseFloat(user.target) ) {
         console.log(current.ticker , parseFloat(user.target) );
-        // wait for oder to execute
         console.log(' Target Price Executed', user.target);
         process.exit();
       }
@@ -221,9 +227,7 @@ function getBalances() {
   return gdaxAPI.loadBalances().then((balances: Balances) => {
     for (const profile in balances) {
       for (const c in balances[profile]) {
-        if (c === 'USD') {
-          balanceANDfunds.push(balances[profile][c]);
-        }
+        balanceANDfunds.push({coin: c, funds: balances[profile][c]});
       }
     }
     return balanceANDfunds;
@@ -233,13 +237,24 @@ function getBalances() {
 }
 
 function printBalances() {
-  getBalances().then((total) => {
+  getBalances().then((total: any[]) => {
     /*
     * balance - total funds in the account
     * available - funds available to withdraw or trade
     */
-  console.log('💵\tUSD\t💵');
-  console.log(`balance: ${total[0].balance.toNumber()} -- available: ${total[0].available.toNumber()}`);
+    for (const t in total ) {
+      if (total[t].funds.balance.toNumber() !== 0  || total[t].funds.available.toNumber() !== 0 ) {
+        console.log(`${total[t].coin}\tbalance: ${total[t].funds.balance.toNumber()} -- available: ${total[t].funds.available.toNumber()}`);
+        // switch (total[t].coin) {
+        //   case 'ETH': console.log(`${total[t].coin}\tbalance: ${total[t].funds.balance.toNumber()} -- available: ${total[t].funds.available.toNumber()}`);
+        //   case 'USD': console.log(`${total[t].coin}\tbalance: ${total[t].funds.balance.toNumber()} -- available: ${total[t].funds.available.toNumber()}`);
+        //   case 'BCH': console.log(`${total[t].coin}\tbalance: ${total[t].funds.balance.toNumber()} -- available: ${total[t].funds.available.toNumber()}`);
+        //   case 'BTC': console.log(`${total[t].coin}\tbalance: ${total[t].funds.balance.toNumber()} -- available: ${total[t].funds.available.toNumber()}`);
+        // }
+      }
+    }
+    // console.log('💵\tUSD\t💵');
+    // console.log(`balance: ${total[0].balance.toNumber()} -- available: ${total[0].available.toNumber()}`);
   });
 }
 
@@ -349,7 +364,7 @@ function cancelOrders() {
  * https://github.com/coinbase/gdax-tt/issues/199
  */
 function placeOrder(order: PlaceOrderMessage) {
-  const msg = `PLACED: Limit ${order.side} order for ${order.size} at ${order.price}`;
+  const msg = chalk.red(`PLACED: Limit ${order.side} order for ${order.size} at ${order.price}`);
   // gdaxAPI.placeOrder(order).then((liveOrder: LiveOrder) => {
   //     console.log(liveOrder);
   //     console.log(msg);
@@ -453,7 +468,7 @@ inquirer.prompt(prompt.feedQ).then( (ans) => {
   if (hasAuth()) {
     switch (ans.choice) {
       case 'Account' : gotoAccountMenu(); break;
-      case 'Limit Buy + DSO': get_Limit_Buy(); break;
+      case 'Limit Buy + DSO': get_Limit_Buy_to_DS(); break;
       case 'Double Sided Order': get_Double_Sided(); break;
       case 'Limit Buy - Best Bid': get_Limit_Buy_Change(); break;
       case 'Limit Sell - Best Ask': get_Limit_Sell_Change(); break;
