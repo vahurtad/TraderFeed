@@ -1,6 +1,7 @@
 import inquirer = require('inquirer');
 import chalk from 'chalk';
 import * as prompt from './prompts';
+import { PRODUCT_ID, THRESHOLD_PRICE } from './prompts';
 import * as moment from 'moment';
 import * as GTT from 'gdax-tt';
 import { padfloat } from 'gdax-tt/build/src/utils';
@@ -16,6 +17,7 @@ import { Balances } from 'gdax-tt/build/src/exchanges/AuthenticatedExchangeAPI';
 require('dotenv').config();
 
 // const ctx = new chalk.constructor({level: 3});
+// level: 3 enables TrueType Color
 const spread = {
   bestBid: '',
   bestAsk: ''
@@ -28,9 +30,6 @@ const before = {
   price: '',
   entry: ''
 };
-
-// only one product avaiable to trade
-const PRODUCT_ID = 'ETH-USD';
 
 /* 
 * gets user input
@@ -45,7 +44,7 @@ function get_Limit_Buy_to_DS() {
     const [ask,entry] = v;
     if (entry > ask) {
       console.log(chalk.red(`Entry Price is bigger than Smallest Ask: ${ask}`));
-      console.log(chalk.yellow(`Please enter a number`));
+      console.log(chalk.yellow(`Please enter a entry price`));
       get_Limit_Buy_to_DS();
     } else {
       console.log(chalk.red(`Smallest Ask: ${ask}`));
@@ -76,7 +75,7 @@ function set_Limit_Buy_to_Double(current, user) {
   }
   // wait for order message OR check funds
   if ((current.ticker) < user.entry ) {
-    console.log(before.entry);
+    console.log('here',before.entry);
     console.log('Entry Price Executed', user.entry);
     // execute double sided order
     console.log(chalk.yellow('Executing DSO'));
@@ -464,6 +463,9 @@ function printStats(book: LiveOrderbook) {
 }
 
 function get_Threshold_Price(params) {
+  if ( params.threshold === '' ) {
+    params.threshold = THRESHOLD_PRICE;
+  }
   const difference = params.target - params.stop;
   const thresholdPrice = Number(difference * params.threshold) + Number(params.stop);
   params.thresholdPrice = thresholdPrice;

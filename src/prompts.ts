@@ -1,4 +1,5 @@
-import { getAndPrintTickers } from './trader';
+export const PRODUCT_ID = 'ETH-USD';
+export const THRESHOLD_PRICE = '0.73';
 
 /*
 * PROMPTS
@@ -10,25 +11,27 @@ const validateAsset = (v) => {
   } else
   if (!isNaN(parseFloat(v))) {
     return true;
-  } else {
-    return 'Please type a number or leave blank for all';
   }
+  return 'Please type a number or leave blank for all';
 };
 
 const validateNumber = (v) => {
   if (!isNaN(parseFloat(v))) {
     return true;
-  } else {
-    return 'Please type a number';
   }
+  return 'Please type a number';
 };
 
 const validateDecimal = (v) => {
   const valid = v.match(/^(0\d*)?(\.\d+)?(?<=\d)$/i);
+  v = v.replace(/\s/g,'');
+  if (v === '' || v.length === 0) {
+    return true;
+  } else
   if (valid) {
     return true;
   }
-  return 'Please enter a decimal < 1';
+  return `Please enter a decimal < 1 or leave blank for ${THRESHOLD_PRICE}` ;
 };
 
 export const feedQ = [{
@@ -90,6 +93,7 @@ export const limitBuytoDSPrompt = [
     type: 'input',
     name: 'threshold',
     message: 'Threshold to Switch',
+    default: THRESHOLD_PRICE,
     validate: validateDecimal
   }
 ];
@@ -117,6 +121,7 @@ export const doubleSidedPrompt = [
     type: 'input',
     name: 'threshold',
     message: 'Threshold to Switch',
+    default: THRESHOLD_PRICE,
     validate: validateDecimal
   }
 ];
