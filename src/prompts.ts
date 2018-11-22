@@ -2,21 +2,25 @@
  * PROMPTS
  */
 
-const validateNum = (v) => {
-  console.log(v);
-  if (v === '') {
-    console.log('all');
-    return true;
-  } else
-  if (v === 'all') {
+const validateAsset = (v) => {
+  v = v.replace(/\s/g,'');
+  if (v === '' || v === 'all' || v.length === 0) {
     return true;
   } else
   if (!isNaN(parseFloat(v))) {
     return true;
   } else {
-    console.log('Please type a number or leave blank for all');
+    return 'Please type a number or leave blank for all';
   }
 };
+
+const validateNumber = (v) => {
+    if (!isNaN(parseFloat(v))) {
+      return true;
+    } else {
+      return 'Please type a number';
+    }
+  };
 
 const validateDecimal = (v) => {
   const valid = v.match(/^(0\d*)?(\.\d+)?(?<=\d)$/i);
@@ -52,32 +56,37 @@ export const accountMenu = [{
     ]
 }];
 
-export const limitBuyPrompt = [
+export const limitBuytoDSPrompt = [
     {
         type: 'input',
         name: 'price',
-        message: 'Price to buy'
+        message: 'Price to buy',
+        validate: validateNumber
     },
     {
         type: 'input',
         name: 'size',
         message: 'Asset Amount',
-        default: 'all'
+        default: 'all',
+        validate: validateAsset
     },
     {
         type: 'input',
         name: 'target',
-        message: 'Target Price'
+        message: 'Target Price',
+        validate: validateNumber
     },
     {
         type: 'input',
         name: 'stop',
-        message: 'Stop Loss Price'
+        message: 'Stop Loss Price',
+        validate: validateNumber
     },
     {
        type: 'input',
        name: 'threshold',
-       message: 'Threshold to Switch'
+       message: 'Threshold to Switch',
+       validate: validateDecimal
     }
 ];
 export const doubleSidedPrompt = [
@@ -86,17 +95,19 @@ export const doubleSidedPrompt = [
         name: 'size',
         message: 'Asset Amount',
         default: 'all',
-        validate: validateNum
+        validate: validateAsset
      },
      {
         type: 'input',
         name: 'target',
-        message: 'Target Price'
+        message: 'Target Price',
+        validate: validateNumber
      },
      {
         type: 'input',
         name: 'stop',
-        message: 'Stop Loss Price'
+        message: 'Stop Loss Price',
+        validate: validateNumber
      },
      {
         type: 'input',
@@ -110,7 +121,8 @@ export const limitBuyBidPrompt = [
         type: 'input',
         name: 'size',
         message: 'Asset Amount',
-        default: 'all'
+        default: 'all',
+        validate: validateAsset
     },
 ];
 export const limitSellAskPrompt = [
@@ -118,6 +130,7 @@ export const limitSellAskPrompt = [
         type: 'input',
         name: 'size',
         message: 'Asset Amount',
-        default: 'all'
+        default: 'all',
+        validate: validateAsset
     },
 ];
