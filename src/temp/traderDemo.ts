@@ -14,7 +14,7 @@
 
 import { getSubscribedFeeds } from 'gdax-tt/build/src/factories/gdaxFactories';
 import { ConsoleLoggerFactory } from 'gdax-tt/build/src/utils/Logger';
-import { GDAXFeed } from 'gdax-tt/build/src//exchanges/gdax/GDAXFeed';
+import { GDAX_API_URL, GDAXFeed } from 'gdax-tt/build/src/exchanges';
 import { Trader, TraderConfig } from 'gdax-tt/build/src/core/Trader';
 import Limiter from 'gdax-tt/build/src/core/RateLimiter';
 import {
@@ -27,14 +27,20 @@ import {
 } from 'gdax-tt/build/src/core/Messages';
 import { StaticCommandSet } from 'gdax-tt/build/src/lib/StaticCommandSet';
 import { LiveOrder } from 'gdax-tt/build/src/lib/Orderbook';
+import { GDAXConfig } from 'gdax-tt/build/src/exchanges/gdax/GDAXInterfaces';
+require('dotenv').config();
 
-const auth = {
-    key: process.env.GDAX_KEY,
-    secret: process.env.GDAX_SECRET,
-    passphrase: process.env.GDAX_PASSPHRASE
-};
-const logger = ConsoleLoggerFactory();
+const logger = ConsoleLoggerFactory({level: 'info'});
 const product = 'LTC-USD';
+const gdaxConfig: GDAXConfig = {
+    logger: logger,
+    apiUrl: GDAX_API_URL || 'https://api.gdax.com',
+    auth: {
+      key: process.env.GDAX_KEY,
+      secret: process.env.GDAX_SECRET,
+      passphrase: process.env.GDAX_PASSPHRASE
+    }
+  };
 
 /**
  * Prepare a set of order execution messages. For simplicity, we'll use `StaticCommandSet` to play them to
@@ -96,7 +102,7 @@ const messages: StreamMessage[] = [
 ];
 
 // We could also use FeedFactory here and avoid all the config above.
-getSubscribedFeeds({ auth: auth, logger: logger }, [product]).then((feed: GDAXFeed) => {
+getSubscribedFeeds(gdaxConfig, [product]).then((feed: GDAXFeed) => {
     // Configure the trader, and use the API provided by the feed
     const traderConfig: TraderConfig = {
         logger: logger,

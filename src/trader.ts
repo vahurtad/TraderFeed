@@ -288,6 +288,7 @@ function loadTick(isMenu, params) {
   let currentBid = 0;
   let current = {};
   getSubscribedFeeds(gdaxConfig, [PRODUCT_ID]).then((feed: GDAXFeed) => {
+    console.log(feed)
     const config: LiveBookConfig = {
       product: PRODUCT_ID,
       logger: logger
