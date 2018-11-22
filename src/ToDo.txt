@@ -13,4 +13,8 @@
 5. add threshold as decimals to menu item
 ----------
 6. added validate to threshold for decimals > 1
-7. added validate for asset amount to all or a number, not letters 
+7. added validate for asset amount to all or a number, not letters
+----------
+8. check entry price if its .01 lower than smallest ask 
+9. add default balue for threshold is .73
+10. need trigger for order filled
