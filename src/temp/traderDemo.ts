@@ -17,6 +17,9 @@ import { ConsoleLoggerFactory } from 'gdax-tt/build/src/utils/Logger';
 import { GDAX_API_URL, GDAXFeed } from 'gdax-tt/build/src/exchanges';
 import { Trader, TraderConfig } from 'gdax-tt/build/src/core/Trader';
 import Limiter from 'gdax-tt/build/src/core/RateLimiter';
+import { ZERO } from 'gdax-tt/build/src/lib/types';
+import chalk from 'chalk';
+import { PublicExchangeAPI, Ticker } from 'gdax-tt/build/src/exchanges/PublicExchangeAPI';
 import {
     CancelOrderRequestMessage,
     ErrorMessage,
@@ -31,7 +34,7 @@ import { GDAXConfig } from 'gdax-tt/build/src/exchanges/gdax/GDAXInterfaces';
 require('dotenv').config();
 
 const logger = ConsoleLoggerFactory({level: 'info'});
-const product = 'LTC-USD';
+const product = 'ETH-USD';
 const gdaxConfig: GDAXConfig = {
     logger: logger,
     apiUrl: GDAX_API_URL || 'https://api.gdax.com',
@@ -58,48 +61,49 @@ const gdaxConfig: GDAXConfig = {
  * 6. Cancel the 2 limits orders and the stop orders
  */
 const messages: StreamMessage[] = [
-    {
-        type: 'placeOrder',
-        productId: product,
-        funds: '0.1',
-        side: 'buy',
-        orderType: 'market'
-    } as PlaceOrderMessage,
-    {
-        type: 'placeOrder',
-        productId: product,
-        size: '0.1',
-        price: '1.1',
-        side: 'buy',
-        orderType: 'limit',
-        postOnly: true
-    } as PlaceOrderMessage,
-    {
-        type: 'placeOrder',
-        productId: product,
-        funds: '0.1',
-        side: 'sell',
-        orderType: 'market'
-    } as PlaceOrderMessage,
-    {
-        type: 'placeOrder',
-        productId: product,
-        size: '0.01',
-        price: '10',
-        side: 'sell',
-        orderType: 'stop',
-        postOnly: true
-    } as PlaceOrderMessage,
-    {
-        type: 'placeOrder',
-        productId: product,
-        size: '0.1',
-        price: '1.4',
-        side: 'buy',
-        orderType: 'limit',
-        postOnly: true
-    } as PlaceOrderMessage
+    // {
+    //     type: 'placeOrder',
+    //     productId: product,
+    //     funds: '0.1',
+    //     side: 'buy',
+    //     orderType: 'market'
+    // } as PlaceOrderMessage,
+    // {
+    //     type: 'placeOrder',
+    //     productId: product,
+    //     size: '0.1',
+    //     price: '1.1',
+    //     side: 'buy',
+    //     orderType: 'limit',
+    //     postOnly: true
+    // } as PlaceOrderMessage,
+    // {
+    //     type: 'placeOrder',
+    //     productId: product,
+    //     funds: '0.1',
+    //     side: 'sell',
+    //     orderType: 'market'
+    // } as PlaceOrderMessage,
+    // {
+    //     type: 'placeOrder',
+    //     productId: product,
+    //     size: '0.01',
+    //     price: '10',
+    //     side: 'sell',
+    //     orderType: 'stop',
+    //     postOnly: true
+    // } as PlaceOrderMessage,
+    // {
+    //     type: 'placeOrder',
+    //     productId: product,
+    //     size: '0.1',
+    //     price: '1.4',
+    //     side: 'buy',
+    //     orderType: 'limit',
+    //     postOnly: true
+    // } as PlaceOrderMessage
 ];
+let currentTicker = ZERO;
 
 // We could also use FeedFactory here and avoid all the config above.
 getSubscribedFeeds(gdaxConfig, [product]).then((feed: GDAXFeed) => {
@@ -111,36 +115,27 @@ getSubscribedFeeds(gdaxConfig, [product]).then((feed: GDAXFeed) => {
         fitOrders: false
     };
     const trader = new Trader(traderConfig);
-    const orders = new StaticCommandSet(messages, false);
-    // We use a limiter to play each order once every 2 seconds.
-    const limiter = new Limiter(1, 500);
-    // We'll play the orders through the limiter, so connect them up
-    orders.pipe(limiter);
+    // const orders = new StaticCommandSet(messages, false);
+    // // We use a limiter to play each order once every 2 seconds.
+    // const limiter = new Limiter(1, 500);
+    // // We'll play the orders through the limiter, so connect them up
+    // orders.pipe(limiter);
     // We can only pipe one stream into the trader, so we can't pipe both the GDAX feed as well as our trading commands.
     // We can pipe one, and then use the event mechanism to handle the other. In this demo we'll pipe the message feed
     // to trader,
     feed.pipe(trader);
     // .. and execute the trade messages as they come out of the limiter.
-    limiter.on('data', (msg: StreamMessage) => {
+    trader.on('data', (msg: StreamMessage) => {
         trader.executeMessage(msg);
     });
 
+    trader.on('LiveOrderbook.ticker', (ticker: Ticker) => {
+        currentTicker = ticker.price;
+        console.log(`${chalk.green('💰 ')} ${currentTicker.toFixed(2)} ${chalk.green(' 💰')} `);
+      });
     // We're basically done. Now set up listeners to log the trades as they happen
     trader.on('Trader.order-placed', (msg: LiveOrder) => {
         logger.log('info', 'Order placed', JSON.stringify(msg));
-        if (msg.extra.type === 'market') {
-            return;
-        }
-        const cancel: CancelOrderRequestMessage = {
-            time: null,
-            type: 'cancelOrder',
-            orderId: msg.id
-        };
-        orders.messages.push(cancel);
-        orders.sendOne();
-        if (msg.price.toString() === '1.4') {
-            orders.end();
-        }
     });
     trader.on('Trader.trade-executed', (msg: TradeExecutedMessage) => {
         logger.log('info', 'Trade executed', JSON.stringify(msg));
