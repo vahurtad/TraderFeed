@@ -1,14 +1,25 @@
 import inquirer = require('inquirer');
 import chalk from 'chalk';
 import * as prompt from './prompts';
-import { PRODUCT_ID, THRESHOLD_PRICE } from './prompts';
+import { spread, before, PRODUCT_ID, THRESHOLD_PRICE } from './constants';
 import * as moment from 'moment';
 import * as GTT from 'gdax-tt';
 import { padfloat } from 'gdax-tt/build/src/utils';
 import { LiveBookConfig, LiveOrderbook, LevelMessage, SkippedMessageEvent } from 'gdax-tt/build/src/core';
 import { GDAXConfig } from 'gdax-tt/build/src/exchanges/gdax/GDAXInterfaces';
-import { PlaceOrderMessage } from 'gdax-tt/build/src/core/Messages';
+import {
+  CancelOrderRequestMessage,
+  ErrorMessage,
+  PlaceOrderMessage,
+  StreamMessage,
+  TradeMessage,
+  TickerMessage,
+  TradeExecutedMessage,
+  TradeFinalizedMessage,
+  OrderbookMessage,
+  MyOrderPlacedMessage } from 'gdax-tt/build/src/core/Messages';
 import { GDAXExchangeAPI, GDAX_API_URL, GDAXFeed } from 'gdax-tt/build/src/exchanges';
+import { Trader, TraderConfig } from 'gdax-tt/build/src/core/Trader';
 import { PublicExchangeAPI, Ticker } from 'gdax-tt/build/src/exchanges/PublicExchangeAPI';
 import { getSubscribedFeeds } from 'gdax-tt/build/src/factories/gdaxFactories';
 import { ZERO } from 'gdax-tt/build/src/lib/types';
@@ -18,25 +29,13 @@ require('dotenv').config();
 
 // const ctx = new chalk.constructor({level: 3});
 // level: 3 enables TrueType Color
-const spread = {
-  bestBid: '',
-  bestAsk: ''
-};
-const before = {
-  ask: 0,
-  bid: 0,
-  target: '',
-  stop: '',
-  price: '',
-  entry: ''
-};
 
 /* 
 * gets user input
 * to buy and use double sided order
 */
 function get_Limit_Buy_to_DS() {
-  inquirer.prompt(prompt.entryPrompt).then((param) => {
+  inquirer.prompt(prompt.entryPrompt).then( (param) => {
     return getAndPrintTickers().then((v) => {
       return [v.ask.toNumber().toFixed(2), param.entry];
     });
@@ -214,13 +213,15 @@ function set_Limit_Sell(current, user) {
 const logger = GTT.utils.ConsoleLoggerFactory({level: 'error'});
 const gdaxConfig: GDAXConfig = {
   logger: logger,
-  apiUrl: GDAX_API_URL || 'https://api.gdax.com',
+  apiUrl: process.env.COINBASE_API,
   auth: {
     key: process.env.GDAX_KEY,
     secret: process.env.GDAX_SECRET,
     passphrase: process.env.GDAX_PASSPHRASE
   }
 };
+// console.log(gdaxConfig);
+
 const gdaxAPI = new GDAXExchangeAPI(gdaxConfig);
 
 const publicExchanges: PublicExchangeAPI[] = [gdaxAPI];
@@ -267,13 +268,7 @@ function printBalances() {
     */
     for (const t in total ) {
       if (total[t].funds.balance.toNumber() !== 0  || total[t].funds.available.toNumber() !== 0 ) {
-        console.log(`${total[t].coin}\tbalance: ${total[t].funds.balance.toNumber()} -- available: ${total[t].funds.available.toNumber()}`);
-        // switch (total[t].coin) {
-        //   case 'ETH': console.log(`${total[t].coin}\tbalance: ${total[t].funds.balance.toNumber()} -- available: ${total[t].funds.available.toNumber()}`);
-        //   case 'USD': console.log(`${total[t].coin}\tbalance: ${total[t].funds.balance.toNumber()} -- available: ${total[t].funds.available.toNumber()}`);
-        //   case 'BCH': console.log(`${total[t].coin}\tbalance: ${total[t].funds.balance.toNumber()} -- available: ${total[t].funds.available.toNumber()}`);
-        //   case 'BTC': console.log(`${total[t].coin}\tbalance: ${total[t].funds.balance.toNumber()} -- available: ${total[t].funds.available.toNumber()}`);
-        // }
+        console.log(`${total[t].coin}\tbalance: ${total[t].funds.balance.toFixed(7)} -- available: ${total[t].funds.available.toFixed(7)}`);
       }
     }
   });
@@ -287,15 +282,46 @@ function loadTick(isMenu, params) {
   let currentAsk = 0;
   let currentBid = 0;
   let current = {};
+
   getSubscribedFeeds(gdaxConfig, [PRODUCT_ID]).then((feed: GDAXFeed) => {
-    console.log(feed);
     const config: LiveBookConfig = {
       product: PRODUCT_ID,
       logger: logger
     };
     const book = new LiveOrderbook(config);
+
     // register to liveorderbook events
-    book.on('data',() => {
+    book.on('data',(msg: StreamMessage) => {
+      if (msg.type === 'placeOrder') {
+
+        console.log('placeOrder', (msg as PlaceOrderMessage).side);
+        console.log(msg);
+        console.log((msg as PlaceOrderMessage).price, (msg as PlaceOrderMessage).size);
+      }
+
+      if (msg.type === 'myOrderPlaced') {
+        console.log('myOrderPlaced', (msg as MyOrderPlacedMessage).side);
+        console.log((msg as MyOrderPlacedMessage).price, (msg as MyOrderPlacedMessage).size);
+      }
+
+      if (msg.type === 'tradeFinalized') {
+        // shows cancelled open orders with reason = canceled
+        // shows if order has been filled with reason = filled
+        console.log((msg as TradeFinalizedMessage).reason, (msg as TradeFinalizedMessage).time);
+        console.log((msg as TradeFinalizedMessage).side, (msg as TradeFinalizedMessage).price);
+      }
+
+      if (msg.type === 'tradeExecuted') {
+        // happens before a trade is finalized, with a reason =  filled
+        console.log('TradeExecutedMessage', (msg as TradeExecutedMessage).time);
+        console.log((msg as TradeExecutedMessage).tradeSize, (msg as TradeExecutedMessage).price);
+        console.log((msg as TradeExecutedMessage).orderType, (msg as TradeExecutedMessage).side);
+      }
+
+      if (msg.type === 'cancelOrder') {
+        console.log('cancelOrder', (msg as CancelOrderRequestMessage).time);
+        console.log((msg as CancelOrderRequestMessage).orderId.length, 'CANCELLED');
+      }
       // https://github.com/coinbase/gdax-tt/issues/110
       // listening to 'data' event, all data remain in memory
       // force stream in flowing state
@@ -350,16 +376,16 @@ function loadTick(isMenu, params) {
 * ORDER FUNCTIONS
 *******************************************************************************************/
 function getOrders() {
+  // status:  'open', 'pending', 'active'
   gdaxAPI.loadAllOrders(PRODUCT_ID).then((orders) => {
     if (orders.length === 0) {
       console.log(chalk.redBright('No orders'));
     } else {
       orders.forEach((order: LiveOrder) => {
-        console.log();
-        console.log(`${chalk.greenBright(order.status.toUpperCase())}${chalk.greenBright(' ORDERS')}`);
-        console.log(`${chalk.blueBright(order.productId)}\t${order.extra.type}`);
-        console.log(moment(order.extra.created_at).format('MMMM DD h:mm a'));
-        console.log(`${order.extra.side}\t${order.size.toNumber()}`);
+        console.log(`${chalk.italic.greenBright(order.status.toUpperCase())}${chalk.greenBright(' ORDERS')}`);
+        console.log(`${chalk.blueBright(order.productId)}`);
+        console.log(chalk.blueBright.bold(moment(order.extra.created_at).format('MMMM DD h:mm a')));
+        console.log(`${order.extra.type} ${order.extra.side}\t${order.size.toNumber()} @ $${order.price.toNumber()}`);
         console.log(`${'stop '}${order.extra.stop}\t${order.extra.stop_price}`);
       });
     }
@@ -509,6 +535,7 @@ function gotoAccountMenu() {
     switch (ans.more) {
       case 'Balances': printBalances(); break;
       case 'Orders': getOrders(); break;
+      case 'exit': console.log(chalk.cyan('Good Bye 👋\n')); process.exit(); break;
       default:  console.log('Sorry, no menu item for that');
     }
   });

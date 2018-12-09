@@ -1,6 +1,4 @@
-export const PRODUCT_ID = 'ETH-USD';
-export const THRESHOLD_PRICE = '0.73';
-
+import { THRESHOLD_PRICE } from './constants';
 /*
 * PROMPTS
 */

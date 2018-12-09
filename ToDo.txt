@@ -16,5 +16,8 @@
 7. added validate for asset amount to all or a number, not letters
 ----------
 8. check entry price if its .01 lower than smallest ask 
-9. added default balue for threshold is .73
-10. need trigger for order filled
+9. added default value for threshold is .73
+10. **need trigger for order filled**
+
+
+// to use sandbox, changes were made to gdaxFactories.ts,  gdaxFactories.d.ts,  gdaxFactories.js, to FeedFactory()
