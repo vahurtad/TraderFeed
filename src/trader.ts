@@ -34,6 +34,9 @@ require('dotenv').config();
 * gets user input
 * to buy and use double sided order
 */
+
+let traderMessage = '';
+
 function get_Limit_Buy_to_DS() {
   inquirer.prompt(prompt.entryPrompt).then( (param) => {
     return getAndPrintTickers().then((v) => {
@@ -261,6 +264,7 @@ function getBalances() {
 }
 
 function printBalances() {
+  console.log(traderMessage);
   getBalances().then((total: any[]) => {
     /*
     * balance - total funds in the account
@@ -274,10 +278,8 @@ function printBalances() {
   });
 }
 
-function getMsg(msg) {
-  if (msg.type === 'tradeFinalized') {
-    console.log(msg.type);
-  }
+function getMsg() {
+  console.log(traderMessage);
 }
 
 /******************************************************************************************
@@ -288,6 +290,8 @@ function loadTick(isMenu, params) {
   let currentAsk = 0;
   let currentBid = 0;
   let current = {};
+  let placedMessage = '';
+  let finalMessage = '';
 
   getSubscribedFeeds(gdaxConfig, [PRODUCT_ID]).then((feed: GDAXFeed) => {
     const config: LiveBookConfig = {
@@ -295,9 +299,9 @@ function loadTick(isMenu, params) {
       logger: logger
     };
     const book = new LiveOrderbook(config);
-
     // register to liveorderbook events
     book.on('data',(msg: StreamMessage) => {
+      traderMessage = msg.type;
       if (msg.type === 'placeOrder') {
         console.log('placeOrder', (msg as PlaceOrderMessage).side);
         console.log(msg);
@@ -305,11 +309,13 @@ function loadTick(isMenu, params) {
       }
 
       if (msg.type === 'myOrderPlaced') {
+        placedMessage = msg.type;
         console.log(chalk.bgGreen('PLACED'), chalk.green((msg as MyOrderPlacedMessage).side));
         console.log(chalk.green((msg as MyOrderPlacedMessage).price, (msg as MyOrderPlacedMessage).size));
       }
 
       if (msg.type === 'tradeFinalized') {
+        finalMessage = msg.type;
         // shows cancelled open orders with reason = canceled
         // shows if order has been filled with reason = filled
         console.log(chalk.bgRedBright((msg as TradeFinalizedMessage).reason),
@@ -328,6 +334,11 @@ function loadTick(isMenu, params) {
         console.log('CANCELLED', chalk.bgRedBright.bold(moment((msg as CancelOrderRequestMessage).time).format('MMMM DD h:mm a')));
         console.log((msg as CancelOrderRequestMessage).orderId.length);
       }
+      if (msg.type === 'ticker') {
+        console.log('-', msg.type);
+      }
+
+
       // https://github.com/coinbase/gdax-tt/issues/110
       // listening to 'data' event, all data remain in memory
       // force stream in flowing state
@@ -354,7 +365,7 @@ function loadTick(isMenu, params) {
         console.log(`${chalk.green('|BID')} ${spread.bestBid} ${chalk.red('|ASK')} ${spread.bestAsk}`);
 
         switch (isMenu) {
-          case '0' : getMsg(msg); break;
+          case '0' : break;
           case '1' : set_Limit_Buy_to_Double(current,params); break;
           case '2' : set_Double_Sided_Order(current,params); break;
           case '3' : set_Limit_Buy(current,params); break;
