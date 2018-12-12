@@ -3,7 +3,8 @@ export const THRESHOLD_PRICE = '0.73';
 
 export const spread = {
   bestBid: '',
-  bestAsk: ''
+  bestAsk: '',
+  ticker: 0,
 };
 
 export const before = {

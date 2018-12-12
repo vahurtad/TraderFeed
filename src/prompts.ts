@@ -33,7 +33,7 @@ const validateDecimal = (v) => {
 };
 
 export const feedQ = [{
-  type: 'rawlist',
+  type: 'list',
   name: 'choice',
   message: 'Which?',
   choices: [
@@ -42,6 +42,7 @@ export const feedQ = [{
     'Double Sided Order',
     'Limit Buy - Best Bid',
     'Limit Sell - Best Ask',
+    'Watch',
     'exit'
   ]
 }];

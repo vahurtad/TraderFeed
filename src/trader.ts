@@ -22,7 +22,7 @@ import { GDAXExchangeAPI, GDAX_API_URL, GDAXFeed } from 'gdax-tt/build/src/excha
 import { Trader, TraderConfig } from 'gdax-tt/build/src/core/Trader';
 import { PublicExchangeAPI, Ticker } from 'gdax-tt/build/src/exchanges/PublicExchangeAPI';
 import { getSubscribedFeeds } from 'gdax-tt/build/src/factories/gdaxFactories';
-import { ZERO } from 'gdax-tt/build/src/lib/types';
+import { ZERO, Big } from 'gdax-tt/build/src/lib/types';
 import { LiveOrder } from 'gdax-tt/build/src/lib';
 import { Balances } from 'gdax-tt/build/src/exchanges/AuthenticatedExchangeAPI';
 require('dotenv').config();
@@ -274,6 +274,12 @@ function printBalances() {
   });
 }
 
+function getMsg(msg) {
+  if (msg.type === 'tradeFinalized') {
+    console.log(msg.type);
+  }
+}
+
 /******************************************************************************************
 * FEEDS
 *******************************************************************************************/
@@ -293,34 +299,34 @@ function loadTick(isMenu, params) {
     // register to liveorderbook events
     book.on('data',(msg: StreamMessage) => {
       if (msg.type === 'placeOrder') {
-
         console.log('placeOrder', (msg as PlaceOrderMessage).side);
         console.log(msg);
         console.log((msg as PlaceOrderMessage).price, (msg as PlaceOrderMessage).size);
       }
 
       if (msg.type === 'myOrderPlaced') {
-        console.log('myOrderPlaced', (msg as MyOrderPlacedMessage).side);
-        console.log((msg as MyOrderPlacedMessage).price, (msg as MyOrderPlacedMessage).size);
+        console.log(chalk.bgGreen('PLACED'), chalk.green((msg as MyOrderPlacedMessage).side));
+        console.log(chalk.green((msg as MyOrderPlacedMessage).price, (msg as MyOrderPlacedMessage).size));
       }
 
       if (msg.type === 'tradeFinalized') {
         // shows cancelled open orders with reason = canceled
         // shows if order has been filled with reason = filled
-        console.log((msg as TradeFinalizedMessage).reason, (msg as TradeFinalizedMessage).time);
-        console.log((msg as TradeFinalizedMessage).side, (msg as TradeFinalizedMessage).price);
+        console.log(chalk.bgRedBright((msg as TradeFinalizedMessage).reason),
+        chalk.red((msg as TradeFinalizedMessage).side, (msg as TradeFinalizedMessage).price));
+        console.log(chalk.red(moment((msg as TradeFinalizedMessage).time).format('MMMM DD h:mm a')));
       }
 
       if (msg.type === 'tradeExecuted') {
         // happens before a trade is finalized, with a reason =  filled
-        console.log('TradeExecutedMessage', (msg as TradeExecutedMessage).time);
+        console.log('TRADE EXECUTED', (msg as TradeExecutedMessage).time);
         console.log((msg as TradeExecutedMessage).tradeSize, (msg as TradeExecutedMessage).price);
         console.log((msg as TradeExecutedMessage).orderType, (msg as TradeExecutedMessage).side);
       }
 
       if (msg.type === 'cancelOrder') {
-        console.log('cancelOrder', (msg as CancelOrderRequestMessage).time);
-        console.log((msg as CancelOrderRequestMessage).orderId.length, 'CANCELLED');
+        console.log('CANCELLED', chalk.bgRedBright.bold(moment((msg as CancelOrderRequestMessage).time).format('MMMM DD h:mm a')));
+        console.log((msg as CancelOrderRequestMessage).orderId.length);
       }
       // https://github.com/coinbase/gdax-tt/issues/110
       // listening to 'data' event, all data remain in memory
@@ -328,7 +334,10 @@ function loadTick(isMenu, params) {
     });
     book.on('LiveOrderbook.ticker', (ticker: Ticker) => {
       currentTicker = ticker.price;
-      console.log(`${chalk.green('💰 ')} ${currentTicker.toFixed(2)} ${chalk.green(' 💰')} `);
+      if (Number(currentTicker) !== spread.ticker) {
+        spread.ticker = Number(currentTicker);
+        console.log(`${chalk.green('💰 ')} ${currentTicker.toFixed(2)} ${chalk.green(' 💰')} `);
+      }
     });
     book.on('LiveOrderbook.update', (msg: LevelMessage) => {
       const highestBid = book.book.highestBid.price.toFixed(2);
@@ -345,10 +354,11 @@ function loadTick(isMenu, params) {
         console.log(`${chalk.green('|BID')} ${spread.bestBid} ${chalk.red('|ASK')} ${spread.bestAsk}`);
 
         switch (isMenu) {
+          case '0' : getMsg(msg); break;
           case '1' : set_Limit_Buy_to_Double(current,params); break;
           case '2' : set_Double_Sided_Order(current,params); break;
-          case '3' : set_Limit_Buy(current,params); break; // 
-          case '4' : set_Limit_Sell(current,params); break; //
+          case '3' : set_Limit_Buy(current,params); break;
+          case '4' : set_Limit_Sell(current,params); break;
           default: console.log('Sorry unable to find menu item. Try again!');
         }
       }
@@ -524,6 +534,7 @@ inquirer.prompt(prompt.feedQ).then( (ans) => {
       case 'Double Sided Order': get_Double_Sided(); break;
       case 'Limit Buy - Best Bid': get_Limit_Buy_Change(); break;
       case 'Limit Sell - Best Ask': get_Limit_Sell_Change(); break;
+      case 'Watch':  loadTick('0', 0); break;
       case 'exit': console.log(chalk.cyan('Good Bye 👋\n')); process.exit(); break;
       default:  console.log('Sorry, no menu item for that');
     }
