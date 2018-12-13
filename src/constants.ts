@@ -1,4 +1,4 @@
-export const PRODUCT_ID = 'ETH-USD';
+export const PRODUCT_ID = 'BTC-USD';
 export const THRESHOLD_PRICE = '0.73';
 
 export const spread = {
@@ -13,5 +13,6 @@ export const before = {
   target: '',
   stop: '',
   price: '',
-  entry: ''
+  entry: '',
+  id: ''
 };

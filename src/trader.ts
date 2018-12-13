@@ -1,30 +1,13 @@
 import inquirer = require('inquirer');
 import chalk from 'chalk';
 import * as prompt from './prompts';
-import { spread, before, PRODUCT_ID, THRESHOLD_PRICE } from './constants';
+import { before, PRODUCT_ID } from './constants';
 import * as moment from 'moment';
-import * as GTT from 'gdax-tt';
-import { padfloat } from 'gdax-tt/build/src/utils';
-import { LiveBookConfig, LiveOrderbook, LevelMessage, SkippedMessageEvent } from 'gdax-tt/build/src/core';
-import { GDAXConfig } from 'gdax-tt/build/src/exchanges/gdax/GDAXInterfaces';
-import {
-  CancelOrderRequestMessage,
-  ErrorMessage,
-  PlaceOrderMessage,
-  StreamMessage,
-  TradeMessage,
-  TickerMessage,
-  TradeExecutedMessage,
-  TradeFinalizedMessage,
-  OrderbookMessage,
-  MyOrderPlacedMessage } from 'gdax-tt/build/src/core/Messages';
-import { GDAXExchangeAPI, GDAX_API_URL, GDAXFeed } from 'gdax-tt/build/src/exchanges';
-import { Trader, TraderConfig } from 'gdax-tt/build/src/core/Trader';
-import { PublicExchangeAPI, Ticker } from 'gdax-tt/build/src/exchanges/PublicExchangeAPI';
-import { getSubscribedFeeds } from 'gdax-tt/build/src/factories/gdaxFactories';
-import { ZERO, Big } from 'gdax-tt/build/src/lib/types';
+import { PlaceOrderMessage } from 'gdax-tt/build/src/core/Messages';
 import { LiveOrder } from 'gdax-tt/build/src/lib';
-import { Balances } from 'gdax-tt/build/src/exchanges/AuthenticatedExchangeAPI';
+import { loadTick } from './Feeds';
+import { printBalances ,hasAuth, getAndPrintTickers, get_Asset_Size, get_Threshold_Price } from './helpers';
+import { gdaxAPI } from './configs';
 require('dotenv').config();
 
 // const ctx = new chalk.constructor({level: 3});
@@ -34,8 +17,6 @@ require('dotenv').config();
 * gets user input
 * to buy and use double sided order
 */
-
-let traderMessage = '';
 
 function get_Limit_Buy_to_DS() {
   inquirer.prompt(prompt.entryPrompt).then( (param) => {
@@ -69,7 +50,7 @@ function get_Limit_Buy_to_DS() {
 * if current price > target then set at best ask
 * if stop did not execute, then sell @ market?
 */
-function set_Limit_Buy_to_Double(current, user) {
+export function set_Limit_Buy_to_Double(current, user) {
   // buy at target as maker 
   if ( user.entry !== before.entry) {
     before.entry = user.entry;
@@ -115,7 +96,7 @@ function get_Double_Sided() {
 * if current price > target price then set at best ask
 * if price <= stop loss price, sell @ market(taker)
 */
-function set_Double_Sided_Order(current, user) {
+export function set_Double_Sided_Order(current, user) {
   const mytarget = user.target;
   /*
   * change order between stop loss price and target price
@@ -171,7 +152,7 @@ function get_Limit_Buy_Change() {
 }
 
 // executes user order
-function set_Limit_Buy(current, user) {
+export function set_Limit_Buy(current, user) {
   // buy at best bid
   // lower the better
 
@@ -197,7 +178,7 @@ function get_Limit_Sell_Change() {
 }
 
 // executes user order
-function set_Limit_Sell(current, user) {
+export function set_Limit_Sell(current, user) {
   // sell at best ask
   // higher the better
   if (current.ask.valueOf() !== before.ask.valueOf() ) {
@@ -211,193 +192,10 @@ function set_Limit_Sell(current, user) {
 }
 
 /******************************************************************************************
-* GDAX FUNCTIONS
-*******************************************************************************************/
-const logger = GTT.utils.ConsoleLoggerFactory({level: 'error'});
-const gdaxConfig: GDAXConfig = {
-  logger: logger,
-  apiUrl: process.env.COINBASE_API,
-  auth: {
-    key: process.env.GDAX_KEY,
-    secret: process.env.GDAX_SECRET,
-    passphrase: process.env.GDAX_PASSPHRASE
-  }
-};
-// console.log(gdaxConfig);
-
-const gdaxAPI = new GDAXExchangeAPI(gdaxConfig);
-
-const publicExchanges: PublicExchangeAPI[] = [gdaxAPI];
-
-function getTickers(exchanges: PublicExchangeAPI[]): Promise<Ticker[]> {
-    const promises = exchanges.map((ex: PublicExchangeAPI) => ex.loadTicker(PRODUCT_ID));
-    return Promise.all(promises);
-}
-
-export function getAndPrintTickers() {
-    return getTickers(publicExchanges).then((tickers: Ticker[]) => {
-        return tickers[0];
-    });
-}
-
-function hasAuth(): boolean {
-  if (gdaxAPI.checkAuth()) {
-    console.log('Authenticated.');
-    return true;
-  }
-  console.log('No authentication credentials were supplied, so cannot fulfil request');
-  return false;
-}
-
-function getBalances() {
-  const balanceANDfunds = [];
-  return gdaxAPI.loadBalances().then((balances: Balances) => {
-    for (const profile in balances) {
-      for (const c in balances[profile]) {
-        balanceANDfunds.push({coin: c, funds: balances[profile][c]});
-      }
-    }
-    return balanceANDfunds;
-  }).catch((err) => {
-    console.log('error', err);
-  });
-}
-
-function printBalances() {
-  console.log(traderMessage);
-  getBalances().then((total: any[]) => {
-    /*
-    * balance - total funds in the account
-    * available - funds available to withdraw or trade
-    */
-    for (const t in total ) {
-      if (total[t].funds.balance.toNumber() !== 0  || total[t].funds.available.toNumber() !== 0 ) {
-        console.log(`${total[t].coin}\tbalance: ${total[t].funds.balance.toFixed(7)} -- available: ${total[t].funds.available.toFixed(7)}`);
-      }
-    }
-  });
-}
-
-function getMsg() {
-  console.log(traderMessage);
-}
-
-/******************************************************************************************
-* FEEDS
-*******************************************************************************************/
-function loadTick(isMenu, params) {
-  let currentTicker = ZERO;
-  let currentAsk = 0;
-  let currentBid = 0;
-  let current = {};
-  let placedMessage = '';
-  let finalMessage = '';
-
-  getSubscribedFeeds(gdaxConfig, [PRODUCT_ID]).then((feed: GDAXFeed) => {
-    const config: LiveBookConfig = {
-      product: PRODUCT_ID,
-      logger: logger
-    };
-    const book = new LiveOrderbook(config);
-    // register to liveorderbook events
-    book.on('data',(msg: StreamMessage) => {
-      traderMessage = msg.type;
-      if (msg.type === 'placeOrder') {
-        console.log('placeOrder', (msg as PlaceOrderMessage).side);
-        console.log(msg);
-        console.log((msg as PlaceOrderMessage).price, (msg as PlaceOrderMessage).size);
-      }
-
-      if (msg.type === 'myOrderPlaced') {
-        placedMessage = msg.type;
-        console.log(chalk.bgGreen('PLACED'), chalk.green((msg as MyOrderPlacedMessage).side));
-        console.log(chalk.green((msg as MyOrderPlacedMessage).price, (msg as MyOrderPlacedMessage).size));
-      }
-
-      if (msg.type === 'tradeFinalized') {
-        finalMessage = msg.type;
-        // shows cancelled open orders with reason = canceled
-        // shows if order has been filled with reason = filled
-        console.log(chalk.bgRedBright((msg as TradeFinalizedMessage).reason),
-        chalk.red((msg as TradeFinalizedMessage).side, (msg as TradeFinalizedMessage).price));
-        console.log(chalk.red(moment((msg as TradeFinalizedMessage).time).format('MMMM DD h:mm a')));
-      }
-
-      if (msg.type === 'tradeExecuted') {
-        // happens before a trade is finalized, with a reason =  filled
-        console.log('TRADE EXECUTED', (msg as TradeExecutedMessage).time);
-        console.log((msg as TradeExecutedMessage).tradeSize, (msg as TradeExecutedMessage).price);
-        console.log((msg as TradeExecutedMessage).orderType, (msg as TradeExecutedMessage).side);
-      }
-
-      if (msg.type === 'cancelOrder') {
-        console.log('CANCELLED', chalk.bgRedBright.bold(moment((msg as CancelOrderRequestMessage).time).format('MMMM DD h:mm a')));
-        console.log((msg as CancelOrderRequestMessage).orderId.length);
-      }
-      if (msg.type === 'ticker') {
-        console.log('-', msg.type);
-      }
-
-
-      // https://github.com/coinbase/gdax-tt/issues/110
-      // listening to 'data' event, all data remain in memory
-      // force stream in flowing state
-    });
-    book.on('LiveOrderbook.ticker', (ticker: Ticker) => {
-      currentTicker = ticker.price;
-      if (Number(currentTicker) !== spread.ticker) {
-        spread.ticker = Number(currentTicker);
-        console.log(`${chalk.green('💰 ')} ${currentTicker.toFixed(2)} ${chalk.green(' 💰')} `);
-      }
-    });
-    book.on('LiveOrderbook.update', (msg: LevelMessage) => {
-      const highestBid = book.book.highestBid.price.toFixed(2);
-      const lowestAsk = book.book.lowestAsk.price.toFixed(2);
-      const newSpread = (Number(lowestAsk) - Number(highestBid)).toFixed(2);
-      const newTicker = currentTicker.toFixed(2);
-
-      if (highestBid.valueOf() !== spread.bestBid.valueOf() || lowestAsk.valueOf() !== spread.bestAsk.valueOf()) {
-        spread.bestBid = highestBid;
-        spread.bestAsk = lowestAsk;
-        currentAsk = parseFloat(spread.bestAsk);
-        currentBid = parseFloat(spread.bestBid);
-        current = {ask: currentAsk, bid: currentBid, spread: parseFloat(newSpread), ticker: parseFloat(newTicker)};
-        console.log(`${chalk.green('|BID')} ${spread.bestBid} ${chalk.red('|ASK')} ${spread.bestAsk}`);
-
-        switch (isMenu) {
-          case '0' : break;
-          case '1' : set_Limit_Buy_to_Double(current,params); break;
-          case '2' : set_Double_Sided_Order(current,params); break;
-          case '3' : set_Limit_Buy(current,params); break;
-          case '4' : set_Limit_Sell(current,params); break;
-          default: console.log('Sorry unable to find menu item. Try again!');
-        }
-      }
-    });
-    book.on('LiveOrderbook.skippedMessage', (details: SkippedMessageEvent) => {
-      // On GDAX, this event should never be emitted, but we put it here for completeness
-      logger.log('error','SKIPPED MESSAGE', details);
-      logger.log('error','Reconnecting to feed');
-      feed.reconnect(0);
-    });
-    book.on('end', () => {
-      logger.log('info', 'Orderbook closed');
-    });
-    book.on('error', (err) => {
-      logger.log('error', 'Livebook errored: ', err);
-      feed.pipe(book);
-    });
-    feed.pipe(book);
-  }).catch((err) => {
-    console.log('ERROR',err);
-  });
-}
-
-/******************************************************************************************
 * ORDER FUNCTIONS
 *******************************************************************************************/
 function getOrders() {
-  // status:  'open', 'pending', 'active'
+  // status: 'open' || 'pending' || 'active'
   gdaxAPI.loadAllOrders(PRODUCT_ID).then((orders) => {
     if (orders.length === 0) {
       console.log(chalk.redBright('No orders'));
@@ -494,44 +292,6 @@ function marketOrderSell(size: string) {
     size: size,
   };
   placeOrder(order);
-}
-
-/******************************************************************************************
-* HELPER FUNCTIONS
-*******************************************************************************************/
-function printTicker(ticker: Ticker, quotePrec: number = 2): string {
-  return `${padfloat(ticker.price, 10, quotePrec)}`;
-}
-
-function printStats(book: LiveOrderbook) {
-  let bestBid = book.state().bids[0].price;
-  const oldBid = bestBid;
-  bestBid = book.state().bids[0].price;
-  console.log(`${bestBid}  ${oldBid}`);
-}
-
-function get_Threshold_Price(params) {
-  if ( params.threshold === '' ) {
-    params.threshold = THRESHOLD_PRICE;
-  }
-  const difference = params.target - params.stop;
-  const thresholdPrice = Number(difference * params.threshold) + Number(params.stop);
-  params.thresholdPrice = thresholdPrice;
-
-  console.log(chalk.bgWhite.red('Threshold Price'), chalk.red(params.thresholdPrice));
-  return params;
-}
-
-function get_Asset_Size(params) {
-  params.size = params.size.replace(/\s/g,'');
-  if (params.size === 'all' || params.size === '' || params.size.length === 0) {
-    return getBalances().then((total) => {
-      params.size = total[1].funds.balance.toNumber();
-      return params;
-    });
-  } else {
-    return params;
-  }
 }
 
 /******************************************************************************************

@@ -2,7 +2,7 @@ import { THRESHOLD_PRICE } from './constants';
 /*
 * PROMPTS
 */
-const validateAsset = (v) => {
+const validateAsset = (v: string) => {
   v = v.replace(/\s/g,'');
   if (v === '' || v === 'all' || v.length === 0) {
     return true;
@@ -13,14 +13,14 @@ const validateAsset = (v) => {
   return 'Please type a number or leave blank for all';
 };
 
-const validateNumber = (v) => {
+const validateNumber = (v: string) => {
   if (!isNaN(parseFloat(v))) {
     return true;
   }
   return 'Please type a number';
 };
 
-const validateDecimal = (v) => {
+const validateDecimal = (v: string) => {
   const valid = v.match(/^(0\d*)?(\.\d+)?(?<=\d)$/i);
   v = v.replace(/\s/g,'');
   if (v === '' || v.length === 0) {
