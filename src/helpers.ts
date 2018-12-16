@@ -1,8 +1,9 @@
 import chalk from 'chalk';
-import { PRODUCT_ID, THRESHOLD_PRICE } from './constants';
+import { PRODUCT_ID, COIN, THRESHOLD_PRICE } from './constants';
 import { padfloat } from 'gdax-tt/build/src/utils';
 import { Balances } from 'gdax-tt/build/src/exchanges/AuthenticatedExchangeAPI';
 import { PublicExchangeAPI, Ticker } from 'gdax-tt/build/src/exchanges/PublicExchangeAPI';
+import { BookBuilder } from 'gdax-tt/build/src/lib/BookBuilder';
 import { LiveOrderbook } from 'gdax-tt/build/src/core';
 import { publicExchanges, gdaxAPI } from './configs';
 /******************************************************************************************
@@ -16,6 +17,17 @@ function getTickers(exchanges: PublicExchangeAPI[]): Promise<Ticker[]> {
 export function getAndPrintTickers() {
   return getTickers(publicExchanges).then((tickers: Ticker[]) => {
       return tickers[0];
+  });
+}
+
+function getOrderbook(exchanges: PublicExchangeAPI[]): Promise<BookBuilder[]> {
+  const promises = exchanges.map((ex: PublicExchangeAPI) => ex.loadOrderbook(PRODUCT_ID));
+  return Promise.all(promises);
+}
+
+export function getAndPrintOrderbook() {
+  return getOrderbook(publicExchanges).then((orderbook: BookBuilder[]) => {
+      return orderbook[0];
   });
 }
 
@@ -39,6 +51,10 @@ function printStats(book: LiveOrderbook) {
   console.log(`${bestBid}  ${oldBid}`);
 }
 
+export function getFlooredFixed(v, d) {
+  return (Math.floor(v * Math.pow(10, d)) / Math.pow(10, d)).toFixed(d);
+}
+
 export function get_Threshold_Price(params) {
   if ( params.threshold === '' ) {
     params.threshold = THRESHOLD_PRICE;
@@ -51,12 +67,20 @@ export function get_Threshold_Price(params) {
   return params;
 }
 
-export function get_Asset_Size(params) {
+export function get_Asset_Size(params, type = 'sell') {
   params.size = params.size.replace(/\s/g,'');
   if (params.size === 'all' || params.size === '' || params.size.length === 0) {
-    return getBalances().then((total) => {
-      params.size = total[1].funds.balance.toNumber();
-      return params;
+    return getBalances().then((total: any[]) => {
+      for ( const i in total ) {
+        if (type === 'sell' && total[i].coin === COIN) {
+          params.size = total[i].funds.available.toNumber();
+          return params;
+        }
+        if (type === 'buy' && total[i].coin === 'USD') {
+          params.size = total[i].funds.available.toNumber();
+          return params;
+        }
+      }
     });
   } else {
     return params;

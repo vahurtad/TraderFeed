@@ -1,4 +1,4 @@
-import { THRESHOLD_PRICE } from './constants';
+import { THRESHOLD_PRICE, COIN } from './constants';
 /*
 * PROMPTS
 */
@@ -72,7 +72,7 @@ export const limitBuytoDSPrompt = [
   {
     type: 'input',
     name: 'size',
-    message: 'Asset Amount',
+    message: 'Asset Amount (USD)',
     default: 'all',
     validate: validateAsset
   },
@@ -100,7 +100,7 @@ export const doubleSidedPrompt = [
   {
     type: 'input',
     name: 'size',
-    message: 'Asset Amount',
+    message: `Asset Amount (${COIN})`,
     default: 'all',
     validate: validateAsset
   },

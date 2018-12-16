@@ -1,4 +1,5 @@
 export const PRODUCT_ID = 'BTC-USD';
+export const COIN = 'BTC';
 export const THRESHOLD_PRICE = '0.73';
 
 export const spread = {
@@ -14,5 +15,6 @@ export const before = {
   stop: '',
   price: '',
   entry: '',
+  message : {},
   id: ''
 };

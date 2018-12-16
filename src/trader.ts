@@ -6,7 +6,14 @@ import * as moment from 'moment';
 import { PlaceOrderMessage } from 'gdax-tt/build/src/core/Messages';
 import { LiveOrder } from 'gdax-tt/build/src/lib';
 import { loadTick } from './Feeds';
-import { printBalances ,hasAuth, getAndPrintTickers, get_Asset_Size, get_Threshold_Price } from './helpers';
+import {
+  getAndPrintOrderbook,
+  printBalances,
+  hasAuth,
+  getAndPrintTickers,
+  get_Asset_Size,
+  get_Threshold_Price,
+  getFlooredFixed } from './helpers';
 import { gdaxAPI } from './configs';
 require('dotenv').config();
 
@@ -25,8 +32,8 @@ function get_Limit_Buy_to_DS() {
     });
   }).then((v) => {
     const [ask,entry] = v;
-    if (entry > ask) {
-      console.log(chalk.red(`Entry Price is bigger than Smallest Ask: ${ask}`));
+    if (entry >= ask) {
+      console.log(chalk.red(`Entry needs to be < Smallest Ask: ${ask}`));
       console.log(chalk.yellow(`Please enter a entry price`));
       get_Limit_Buy_to_DS();
     } else {
@@ -36,34 +43,39 @@ function get_Limit_Buy_to_DS() {
         console.log('Entry Price:', chalk.green(params.entry));
         return get_Threshold_Price(params);
       }).then((params) => {
-        return get_Asset_Size(params);
+        return get_Asset_Size(params, 'buy');
       }).then((params) => {
+        // "ERROR: size is too accurate."
+        params.size = getFlooredFixed((params.size / Number(params.entry)),8);
         loadTick('1',params);
       });
     }
-});
+  });
 }
 
+export function LBtoDS_helper(message, orderIdToFulfill, current, user) {
+  // wait for order message OR check funds
+  console.log('orderIdToFulfill', orderIdToFulfill);
+  if (message.type === 'tradeFinalized' && message.reason === 'filled') {
+    console.log(message.id, orderIdToFulfill);
+    if (message.id === orderIdToFulfill) {
+      console.log('Entry Price Executed', user.entry);
+      set_Double_Sided_Order(current, user);
+    }
+  }
+}
 /*
 * executes user order
 * while not holding, buy and execute double sided order
 * if current price > target then set at best ask
 * if stop did not execute, then sell @ market?
 */
-export function set_Limit_Buy_to_Double(current, user) {
+export function set_Limit_Buy_to_Double(message,current, user) {
   // buy at target as maker 
   if ( user.entry !== before.entry) {
+    console.log('setting limit order');
     before.entry = user.entry;
     limitOrderBuy(user.entry, user.size);
-  }
-  // wait for order message OR check funds
-  if ((current.ticker) < user.entry ) {
-    console.log('here',before.entry);
-    console.log('Entry Price Executed', user.entry);
-    // execute double sided order
-    console.log(chalk.yellow('Executing DSO'));
-    set_Double_Sided_Order(current,user);
-
   } else
   if (current.ticker === user.stop) {
     if (user.stop !== before.stop) {
@@ -89,6 +101,18 @@ function get_Double_Sided() {
   });
 }
 
+export function DS_helper(message, orderIdToFulfill, current, user) {
+  // wait for order message OR check funds
+  console.log('orderIdToFulfill', orderIdToFulfill);
+  if (message.type === 'tradeFinalized' && message.reason === 'filled') {
+    console.log(message.id, orderIdToFulfill);
+    if (message.id === orderIdToFulfill) {
+      console.log('Entry Price Executed', user.entry);
+      process.exit();
+    }
+  }
+}
+
 /*
 * executes user order
 * while holding, sell within range [price assest was bought at, target price]
@@ -98,6 +122,7 @@ function get_Double_Sided() {
 */
 export function set_Double_Sided_Order(current, user) {
   const mytarget = user.target;
+  console.log('--------- DOUBLE SIDED ORDER -------');
   /*
   * change order between stop loss price and target price
   * when current threshold has been reached
@@ -116,7 +141,7 @@ export function set_Double_Sided_Order(current, user) {
     if ( user.target !== before.target) {
       before.target = user.target;
       // make order here
-      // console.log('order limit as Target Price', chalk.bgWhite.bold.yellow(user.target));
+      console.log('order limit as Target Price', chalk.bgWhite.bold.yellow(user.target));
       limitOrderSell(user.target, user.size);
     } else
     if (current.ticker === parseFloat(user.target) ) {
@@ -132,11 +157,6 @@ export function set_Double_Sided_Order(current, user) {
         // make order here
         console.log(' order limit as Target Price', chalk.bgWhite.bold.yellow(user.target));
         limitOrderSell(user.stop, user.size);
-      } else
-      if (current.ticker > parseFloat(user.target) ) {
-        console.log(current.ticker , parseFloat(user.target) );
-        console.log(' Target Price Executed', user.target);
-        process.exit();
       }
     }
   }
@@ -161,11 +181,11 @@ export function set_Limit_Buy(current, user) {
   */
   if (current.bid !== before.bid) {
     before.bid = current.bid;
-    // before.bid = Math.min(bestBid, before.bid);
     console.log(before.bid);
   }
 
-  // limitOrderBuy(bestBid)
+  limitOrderBuy(bestBid, user.size);
+  process.exit();
 }
 
 // gets user input
@@ -231,15 +251,12 @@ function cancelOrders() {
  * https://github.com/coinbase/gdax-tt/issues/199
  */
 function placeOrder(order: PlaceOrderMessage) {
-  console.log(order);
   const msg = chalk.red(`PLACED: Limit ${order.side} order for ${order.size} at ${order.price}`);
-   // gdaxAPI.placeOrder(order).then((liveOrder: LiveOrder) => {
-  //     console.log(liveOrder);
-  //     console.log(msg);
-  // }).catch((err) => {
-  //     console.log('ERROR',err);
-  // });
-  console.log(msg);
+  gdaxAPI.placeOrder(order).then((liveOrder: LiveOrder) => {
+    console.log('SUCCESS',msg);
+  }).catch((err) => {
+      console.log('ERROR',err);
+  });
 }
 function limitOrderBuy(price: string, size: string) {
   // placing on order book
