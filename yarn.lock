@@ -1275,9 +1275,9 @@ fs.realpath@^1.0.0:
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
   integrity sha1-FQStJSMVjKpA20onh8sBQRmU6k8=
 
-gdax-tt@coinbase/gdax-tt:
+gdax-tt@vahurtad/gdax-tt:
   version "0.3.1"
-  resolved "https://codeload.github.com/coinbase/gdax-tt/tar.gz/e95c76eb43bda1fd86379612644a79b02948c17a"
+  resolved "https://codeload.github.com/vahurtad/gdax-tt/tar.gz/202e2800da63b18c67938682fe006089d971ff66"
   dependencies:
     "@types/bintrees" "1.0.2"
     "@types/commander" "2.3.31"

@@ -42,6 +42,7 @@ export const feedQ = [{
     'Double Sided Order',
     'Limit Buy - Best Bid',
     'Limit Sell - Best Ask',
+    'Cancel All Orders',
     'Watch',
     'exit'
   ]

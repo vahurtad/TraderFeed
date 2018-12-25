@@ -16,11 +16,14 @@ import {
   MyOrderPlacedMessage } from 'gdax-tt/build/src/core/Messages';
 import {
   set_Double_Sided_Order,
-   set_Limit_Buy,
-   set_Limit_Buy_to_Double,
-   set_Limit_Sell,
-   LBtoDS_helper,
-   DS_helper } from './trader';
+  set_Limit_Buy,
+  set_Limit_Buy_to_Double,
+  set_Limit_Sell,
+  triggerHelper,
+  LB_helper,
+  LS_helper,
+  finalized_DS,
+  finalized_LBtoDS } from './trader';
 import { getAndPrintOrderbook } from './helpers';
 import { logger, gdaxConfig } from './configs';
 require('dotenv').config();
@@ -43,9 +46,7 @@ export function loadTick(isMenu, params) {
     const book = new LiveOrderbook(config);
     // register to liveorderbook events
     book.on('data',(msg: StreamMessage) => {
-      if (msg.type !== 'level') {
-        console.log(msg.type);
-      }
+
       if (msg.type === 'placeOrder') {
         console.log('placeOrder', (msg as PlaceOrderMessage).side);
         console.log((msg as PlaceOrderMessage).price, (msg as PlaceOrderMessage).size);
@@ -60,49 +61,30 @@ export function loadTick(isMenu, params) {
     });
     book.on('LiveOrderbook.finalized', (msg: TradeFinalizedMessage) => {
       message = {type: msg.type, reason: msg.reason, side: msg.side, id: msg.orderId};
-      console.log(`${chalk.bgRedBright((msg as TradeFinalizedMessage).reason)} order ${chalk.red((msg as TradeFinalizedMessage).side)}`);
-      console.log(msg);
+      console.log('-----',msg.type,'-----');
+      console.log(`${chalk.bgRedBright((msg as TradeFinalizedMessage).reason)} ${chalk.red((msg as TradeFinalizedMessage).side)} order`);
       console.log(chalk.red(moment((msg as TradeFinalizedMessage).time).format('MMMM DD h:mm a')));
       console.log(`${chalk.bgRedBright((msg as TradeFinalizedMessage).orderId)}`);
-      // bot.on('open', () => {
-      //   bot.postMessageToChannel(channel, message);
-      // });
-      // bot.ws.close();
+      switch (isMenu) {
+        case '0': break;
+        case '1': finalized_LBtoDS(message, before.id , current, params); break;
+        case '2': finalized_DS(message, before.id , current, params); break;
+        case '3': break;
+        case '4': break;
+        default: console.log('Sorry unable to find menu item. Try again!');
+      }
     });
     book.on('LiveOrderbook.placed', (msg: MyOrderPlacedMessage) => {
       message = {type: msg.type, reason: '', side: msg.side, id: msg.orderId};
       console.log(`${chalk.bgGreen('PLACED')} order ${chalk.green((msg as MyOrderPlacedMessage).side)}`);
       console.log(chalk.green((msg as MyOrderPlacedMessage).price, (msg as MyOrderPlacedMessage).size));
-      // bot.postMessageToChannel(channel, message);
-
-      // getAndPrintOrderbook().then((v) => {
-      // return [v.highestBid.price.toFixed(2),
-      //   v.lowestAsk.price.toFixed(2)];
-      // }).then((v) => {
-      //   const [firstBid, firstAsk] = v;
-      //   current.ask = Number(firstAsk);
-      //   current.bid = Number(firstBid);
-      //   return current;
-      // }).then((curr) => {
-      //   // LBtoDS_helper(before.message, curr, params);
-
-      //   // switch (isMenu) {
-      //   //   case '0' : break;
-      //   //   case '1' : set_Limit_Buy_to_Double(before.message, curr,params); break;
-      //   //   case '2' : set_Double_Sided_Order(curr,params); break;
-      //   //   case '3' : set_Limit_Buy(curr,params); break;
-      //   //   case '4' : set_Limit_Sell(curr,params); break;
-      //   //   default: console.log('Sorry unable to find menu item. Try again!');
-      //   // }
-      // });
-
+      console.log('->>',message.id);
     });
     book.on('LiveOrderbook.executed', (msg: TradeExecutedMessage) => {
       message = {type: msg.type, reason: '', side: msg.side, id: msg.orderId};
-      console.log('TRADE EXECUTED', moment((msg as TradeExecutedMessage).time));
+      console.log('TRADE EXECUTED', chalk.red(moment((msg as TradeExecutedMessage).time).format('MMMM DD h:mm a')));
       console.log((msg as TradeExecutedMessage).orderType, (msg as TradeExecutedMessage).side);
       console.log(`${(msg as TradeExecutedMessage).tradeSize} $${(msg as TradeExecutedMessage).price}`);
-      // bot.postMessageToChannel(channel, message);
     });
     book.on('LiveOrderbook.ticker', (ticker: Ticker) => {
       currentTicker = ticker.price;
@@ -110,11 +92,10 @@ export function loadTick(isMenu, params) {
         spread.ticker = Number(currentTicker);
         console.log(`${chalk.green('💰 ')} ${currentTicker.toFixed(2)} ${chalk.green(' 💰')} `);
       }
-
       switch (isMenu) {
         case '0' : break;
-        case '1' : set_Limit_Buy_to_Double(before.message, current,params); break;
-        case '2' : set_Double_Sided_Order(current,params); break;
+        case '1' : break;
+        case '2' : break;
         case '3' : set_Limit_Buy(current,params); break;
         case '4' : set_Limit_Sell(current,params); break;
         default: console.log('Sorry unable to find menu item. Try again!');
@@ -142,14 +123,28 @@ export function loadTick(isMenu, params) {
         console.log(`${chalk.green('|BID')} ${spread.bestBid} ${chalk.red('|ASK')} ${spread.bestAsk}`);
       }
 
-      console.log('LiveOrderbook',current,before.message, params);
       switch (isMenu) {
-        case '0': break;
-        case '1': LBtoDS_helper(before.message, before.id , current, params); break;
-        case '2': DS_helper(before.message, before.id , current, params); break;
+        case '0' : break;
+        case '1' : break;
+        case '2' : break;
+        case '3' : LB_helper(message, current,params); break;
+        case '4' : LS_helper(before.message,current,params); break;
         default: console.log('Sorry unable to find menu item. Try again!');
       }
 
+    });
+    book.on('LiveOrderbook.trade', (msg) => {
+      console.log('->> NEW TRADE', msg.side === 'buy' ? chalk.green(msg.price) : chalk.red(msg.price));
+      current.ticker = Number(msg.price);
+
+      switch (isMenu) {
+        case '0' : break;
+        case '1' : set_Limit_Buy_to_Double(before.message, current,params); break;
+        case '2' : set_Double_Sided_Order(current,params); break;
+        case '3' : break;
+        case '4' : break;
+        default: console.log('Sorry unable to find menu item. Try again!');
+      }
     });
     book.on('LiveOrderbook.skippedMessage', (details: SkippedMessageEvent) => {
       // On GDAX, this event should never be emitted, but we put it here for completeness

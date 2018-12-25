@@ -59,8 +59,8 @@ export function get_Threshold_Price(params) {
   if ( params.threshold === '' ) {
     params.threshold = THRESHOLD_PRICE;
   }
-  const difference = params.target - params.stop;
-  const thresholdPrice = Number(difference * params.threshold) + Number(params.stop);
+  const difference = params.target - params.entry;
+  const thresholdPrice = Number(difference * params.threshold) + Number(params.entry);
   params.thresholdPrice = thresholdPrice;
 
   console.log(chalk.bgWhite.red('Threshold Price'), chalk.red(params.thresholdPrice));
