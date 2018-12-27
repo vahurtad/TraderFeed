@@ -129,7 +129,7 @@ export const limitBuyBidPrompt = [
   {
     type: 'input',
     name: 'size',
-    message: 'Asset Amount',
+    message: 'Asset Amount (USD)',
     default: 'all',
     validate: validateAsset
   },
@@ -138,7 +138,7 @@ export const limitSellAskPrompt = [
   {
     type: 'input',
     name: 'size',
-    message: 'Asset Amount',
+    message: `Asset Amount (${COIN})`,
     default: 'all',
     validate: validateAsset
   },

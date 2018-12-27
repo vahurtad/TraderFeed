@@ -141,7 +141,7 @@ export function loadTick(isMenu, params) {
         case '0' : break;
         case '1' : set_Limit_Buy_to_Double(before.message, current,params); break;
         case '2' : set_Double_Sided_Order(current,params); break;
-        case '3' : break;
+        case '3' : console.log('---trade---'); break;
         case '4' : break;
         default: console.log('Sorry unable to find menu item. Try again!');
       }

@@ -218,24 +218,15 @@ function get_Limit_Buy_Change() {
 }
 
 export function LB_helper(message,current, user) {
-  console.log("​checking -> message.id", message.id);
-  console.log("​checking -> before.id", before.id);
   if (current.bid !== before.bid) {
     before.bid = current.bid;
-    console.log('>>making new order<<');
-		console.log("​exportfunctionLB_helper -> message.id", message.id);
-    console.log("​exportfunctionLB_helper -> before.id", before.id);
+    gdaxAPI.cancelOrder(before.id).then((order) => {
+      console.log(`SUCCESS ${chalk.red(`CANCELLED`)}`);
+    }).catch((err) => {
+      console.log(chalk.red('error cancelling order'));
+      process.exit();
+    });
     limitOrderBuy(before.bid.toString(), user.size);
-    console.log("​exportfunctionLB_helper -> message.id", message.id);
-    // gdaxAPI.cancelOrder(before.id).then((order) => {
-    //   console.log(`SUCCESS ${chalk.red('CANCELLED',before.id)}`);
-    // }).catch((err) => {
-    //   console.log('error', err);
-    // });
-    
-    before.id = message.id;
-    console.log("​exportfunctionLB_helper -> before.id", before.id);
-    console.log('-------------');
   }
 }
 
@@ -246,8 +237,6 @@ export function set_Limit_Buy(current, user) {
   */
   if (before.bid !== Number(user.entry)) {
     before.bid = Number(user.entry);
-    console.log(before.bid);
-    console.log("​exportfunctionset_Limit_Buy -> before.bid", before.bid);
     limitOrderBuy(before.bid.toString(), user.size);
   }
 }
@@ -263,36 +252,32 @@ function get_Limit_Sell_Change() {
   }).then((v) => {
     const [ask,params] = v;
     params.entry = ask;
-    return get_Asset_Size(params, 'buy');
-  }).then((params) => {
-    params.size = getFlooredFixed((Number(params.size) / Number(params.entry)),8);
-    return params;
+    return get_Asset_Size(params);
   }).then((params) => {
     loadTick('4',params);
   });
 }
 
 export function LS_helper(message,current, user) {
-  if (current.bid !== before.bid) {
+  if (current.ask !== before.ask) {
+    before.ask = current.ask;
     gdaxAPI.cancelOrder(before.id).then((order) => {
-      console.log(`SUCCESS ${chalk.red('CANCELLED')}`);
+      console.log(`SUCCESS ${chalk.red(`CANCELLED`)}`);
     }).catch((err) => {
-      console.log('error', err);
+      console.log(chalk.red('error cancelling order'));
+      process.exit();
     });
-    before.bid = current.bid;
-    limitOrderSell(before.bid.toString(), user.size);
-  } else {
-    console.log('no change', current.bid);
+    limitOrderSell(before.ask.toString(), user.size);
   }
 }
 // executes user order
 export function set_Limit_Sell(current, user) {
   // sell at best ask
   // higher the better
-  if (before.bid !== Number(user.entry)) {
-    before.bid = Number(user.entry);
-    console.log(before.bid);
-    limitOrderSell(before.bid.toString(), user.size);
+  if (before.ask !== Number(user.entry)) {
+    before.ask = Number(user.entry);
+    console.log(before.ask);
+    limitOrderSell(before.ask.toString(), user.size);
   }
 }
 
@@ -340,6 +325,8 @@ function placeOrder(order: PlaceOrderMessage) {
   const msg = chalk.red(`PLACED: Limit ${order.side} order for ${order.size} at ${order.price}`);
   gdaxAPI.placeOrder(order).then((liveOrder: LiveOrder) => {
     console.log('SUCCESS',msg);
+    before.id = liveOrder.id;
+    console.log(before.id, '<<');
   }).catch((err) => {
       console.log('ERROR',err);
   });
