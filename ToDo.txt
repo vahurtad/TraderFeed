@@ -1,0 +1,23 @@
+1. asset amount - has to be within range, check balances
+   
+    set_Double_Sided_Order
+2. percentage threshold - threshold to determine when to switch between stop loss order and target order,
+ using ticker. This adds threshold to menu.
+
+3. use bestAsk to optimize target order - if ticker >= original target and if ordered not executed then 
+    (if spread > .01, make target = bestAsk - .01 else target = bestAsk ) 
+    else order should have been executed
+
+4. remove ticker price - ticker price is not necessary to optimize?
+
+5. add threshold as decimals to menu item
+----------
+6. added validate to threshold for decimals > 1
+7. added validate for asset amount to all or a number, not letters
+----------
+8. check entry price if its .01 lower than smallest ask 
+9. added default value for threshold is .73
+10. **need trigger for order filled**
+
+
+// to use sandbox, changes were made to gdaxFactories.ts,  gdaxFactories.d.ts,  gdaxFactories.js, to FeedFactory()

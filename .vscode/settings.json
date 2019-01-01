@@ -1,5 +1,8 @@
 {
     "editor.fontFamily": "Consolas, 'Courier New', monospace, 'Segoe UI Emoji'",
-    "typescript.tsdk": "node_modules\\typescript\\lib"
-    //"typescript.tsdk": "node_modules\\typescript\\lib"
+    "typescript.tsdk": "node_modules\\typescript\\lib",
+    "terminal.integrated.shell.windows": "C:\\Program Files\\Git\\bin\\bash.exe",
+    "editor.tabSize": 2,
+    "javascript.preferences.quoteStyle": "single",
+    "addSemicolonInTheEnd": true,
 }

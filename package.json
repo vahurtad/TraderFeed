@@ -31,7 +31,7 @@
     "chalk": "^2.4.1",
     "dotenv": "6.1.0",
     "gdax": "0.8.0",
-    "gdax-tt": "coinbase/gdax-tt",
+    "gdax-tt": "vahurtad/gdax-tt",
     "inquirer": "^6.2.0",
     "limiter": "1.1.3",
     "moment": "^2.22.2",
@@ -40,6 +40,7 @@
     "querystring": "0.2.0",
     "simple-mock": "0.8.0",
     "simple-statistics": "6.1.1",
+    "slackbots": "^1.2.0",
     "superagent": "3.8.3",
     "ts-node": "7.0.1",
     "typescript": "3.0.3",
@@ -62,7 +63,7 @@
   "resolutions": {
     "deasync": "^0.1.12"
   },
-   "greenkeeper": {
+  "greenkeeper": {
     "ignore": [
       "ccxt"
     ]
