@@ -7,7 +7,6 @@ import { PlaceOrderMessage } from 'gdax-tt/build/src/core/Messages';
 import { LiveOrder } from 'gdax-tt/build/src/lib';
 import { loadTick } from './Feeds';
 import {
-  getAndPrintOrderbook,
   printBalances,
   hasAuth,
   getAndPrintTickers,
@@ -15,26 +14,17 @@ import {
   get_Threshold_Price,
   getFlooredFixed } from './helpers';
 import { gdaxAPI } from './configs';
+import { constants } from 'http2';
 require('dotenv').config();
 
 // const ctx = new chalk.constructor({level: 3});
 // level: 3 enables TrueType Color
 
-export function triggerHelper(isMenu, type: string, current, params) {
-  switch (isMenu) {
-    case '0': break;
-    case '1': finalized_LBtoDS(before.message, before.id , current, params); break;
-    case '2': finalized_DS(before.message, before.id , current, params); break;
-    case '3': break;
-    case '4': break;
-    default: console.log('Sorry unable to find menu item. Try again!');
-  }
-}
-
 /* 
 * gets user input
 * to buy and use double sided order
 */
+let DSO_TRIGGERED = false;
 
 function get_Limit_Buy_to_DS() {
   inquirer.prompt(prompt.entryPrompt).then( (param) => {
@@ -68,11 +58,15 @@ export function finalized_LBtoDS(message, orderIdToFulfill, current, user) {
   // wait for order message OR check funds
   console.log('orderIdToFulfill', orderIdToFulfill);
   console.log('message',message);
-  if (message.type === 'tradeFinalized' && message.reason === 'filled') {
+  if (message.type === 'tradeFinalized' && message.reason === 'canceled') {
     console.log(message.id, orderIdToFulfill);
     if (message.id === orderIdToFulfill) {
       console.log('Entry Price Executed', user.entry);
       set_Double_Sided_Order(current, user);
+      DSO_TRIGGERED = true;
+    } else
+    if (DSO_TRIGGERED) {
+      process.exit();
     }
   }
 }
@@ -84,28 +78,27 @@ export function finalized_LBtoDS(message, orderIdToFulfill, current, user) {
 */
 export function set_Limit_Buy_to_Double(message,current, user) {
   console.log(current.ticker >= Number(user.target), current.ticker , user.target);
-  // buy at target as maker 
-  if (Number(user.entry) !== Number(before.entry)) {
-    console.log('setting limit order');
-    before.entry = user.entry;
-    limitOrderBuy(user.entry, user.size);
-  } else
-  if (current.ticker === Number(user.stop)) {
-    if (user.stop !== before.stop) {
-      before.stop = user.stop;
-      // make order here
-      marketOrderSell(user.size);
-      process.exit();
+  console.log('DSO_TRIGGERED',DSO_TRIGGERED);
+  if (DSO_TRIGGERED) {
+    set_Double_Sided_Order(current, user);
+  } else {
+    if (Number(user.entry) !== Number(before.entry)) {
+      console.log('setting limit order');
+      before.entry = user.entry;
+      limitOrderBuy(user.entry, user.size);
+    } else
+    if (current.ticker === Number(user.stop)) {
+      if (user.stop !== before.stop) {
+        before.stop = user.stop;
+        // make order here
+        marketOrderSell(user.size);
+        process.exit();
+      }
     }
   }
-  // else
-  // if (current.ticker >= Number(user.target)) {
-  //   console.log('simulation -- trade finalized');
-  //   before.id = '';
-  //   set_Double_Sided_Order(current, user);
-  // }
 }
 
+// TODO:  check threshold price equation that does not use user.entry
 /* 
 * gets user input
 */
@@ -114,6 +107,7 @@ function get_Double_Sided() {
   inquirer.prompt(prompt.doubleSidedPrompt).then((params) => {
     return get_Threshold_Price(params);
   }).then((params) => {
+    console.log(params);
     return get_Asset_Size(params);
   }).then((params) => {
     loadTick('2',params);
@@ -143,6 +137,7 @@ export function finalized_DS(message, orderIdToFulfill, current, user) {
 export function set_Double_Sided_Order(current, user) {
   const mytarget = user.target;
   console.log('--------- DOUBLE SIDED ORDER -------');
+  console.log('ID',before.id);
   /*
   * change order between stop loss price and target price
   * when current threshold has been reached
@@ -177,7 +172,6 @@ export function set_Double_Sided_Order(current, user) {
       // make order here
       console.log(chalk.yellow.underline('Stop Order Executed', chalk.bgWhite.bold.yellow(user.stop)));
       stopOrderSell(user.stop,user.size);
-      process.exit();
     }
   } else
   if (current.ticker === user.target) {
@@ -424,7 +418,7 @@ inquirer.prompt(prompt.feedQ).then( (ans) => {
       case 'Limit Buy - Best Bid': get_Limit_Buy_Change(); break;
       case 'Limit Sell - Best Ask': get_Limit_Sell_Change(); break;
       case 'Cancel All Orders': cancelOrders(); break;
-      case 'Watch':  loadTick('0', 0); break;
+      case 'Watch':  loadTick(); break;
       case 'exit': console.log(chalk.cyan('Good Bye 👋\n')); process.exit(); break;
       default:  console.log('Sorry, no menu item for that');
     }

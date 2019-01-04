@@ -19,7 +19,6 @@ import {
   set_Limit_Buy,
   set_Limit_Buy_to_Double,
   set_Limit_Sell,
-  triggerHelper,
   LB_helper,
   LS_helper,
   finalized_DS,
@@ -31,7 +30,7 @@ require('dotenv').config();
 /******************************************************************************************
 * FEEDS
 *******************************************************************************************/
-export function loadTick(isMenu, params) {
+export function loadTick(isMenu = '0', params = 0) {
   let currentTicker = ZERO;
   let currentAsk = 0;
   let currentBid = 0;
@@ -92,10 +91,11 @@ export function loadTick(isMenu, params) {
         spread.ticker = Number(currentTicker);
         console.log(`${chalk.green('💰 ')} ${currentTicker.toFixed(2)} ${chalk.green(' 💰')} `);
       }
+
       switch (isMenu) {
         case '0' : break;
-        case '1' : break;
-        case '2' : break;
+        case '1' : set_Limit_Buy_to_Double(before.message, current,params); break;
+        case '2' : set_Double_Sided_Order(current,params); break;
         case '3' : set_Limit_Buy(current,params); break;
         case '4' : set_Limit_Sell(current,params); break;
         default: console.log('Sorry unable to find menu item. Try again!');
@@ -136,15 +136,6 @@ export function loadTick(isMenu, params) {
     book.on('LiveOrderbook.trade', (msg) => {
       console.log('->> NEW TRADE', msg.side === 'buy' ? chalk.green(msg.price) : chalk.red(msg.price));
       current.ticker = Number(msg.price);
-
-      switch (isMenu) {
-        case '0' : break;
-        case '1' : set_Limit_Buy_to_Double(before.message, current,params); break;
-        case '2' : set_Double_Sided_Order(current,params); break;
-        case '3' : console.log('---trade---'); break;
-        case '4' : break;
-        default: console.log('Sorry unable to find menu item. Try again!');
-      }
     });
     book.on('LiveOrderbook.skippedMessage', (details: SkippedMessageEvent) => {
       // On GDAX, this event should never be emitted, but we put it here for completeness
