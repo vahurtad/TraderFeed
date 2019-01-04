@@ -19,18 +19,7 @@ require('dotenv').config();
 
 // const ctx = new chalk.constructor({level: 3});
 // level: 3 enables TrueType Color
-
-export function triggerHelper(isMenu, type: string, current, params) {
-  switch (isMenu) {
-    case '0': break;
-    case '1': finalized_LBtoDS(before.message, before.id , current, params); break;
-    case '2': finalized_DS(before.message, before.id , current, params); break;
-    case '3': break;
-    case '4': break;
-    default: console.log('Sorry unable to find menu item. Try again!');
-  }
-}
-
+let DS_TRIGGERED = false;
 /* 
 * gets user input
 * to buy and use double sided order
@@ -73,6 +62,7 @@ export function finalized_LBtoDS(message, orderIdToFulfill, current, user) {
     if (message.id === orderIdToFulfill) {
       console.log('Entry Price Executed', user.entry);
       set_Double_Sided_Order(current, user);
+      DS_TRIGGERED = true;
     }
   }
 }
@@ -83,27 +73,26 @@ export function finalized_LBtoDS(message, orderIdToFulfill, current, user) {
 * if stop did not execute, then sell @ market?
 */
 export function set_Limit_Buy_to_Double(message,current, user) {
-  console.log(current.ticker >= Number(user.target), current.ticker , user.target);
+  console.log('1. DS_TRIGGERED', DS_TRIGGERED);
   // buy at target as maker 
-  if (Number(user.entry) !== Number(before.entry)) {
-    console.log('setting limit order');
-    before.entry = user.entry;
-    limitOrderBuy(user.entry, user.size);
-  } else
-  if (current.ticker === Number(user.stop)) {
-    if (user.stop !== before.stop) {
-      before.stop = user.stop;
-      // make order here
-      marketOrderSell(user.size);
-      process.exit();
+  if (DS_TRIGGERED) {
+    set_Double_Sided_Order(current, user);
+  } else {
+    if (Number(user.entry) !== Number(before.entry)) {
+      console.log('setting limit order');
+      before.entry = user.entry;
+      limitOrderBuy(user.entry, user.size);
+    } else
+    if (current.ticker === Number(user.stop)) {
+      console.log('here in this');
+      if (user.stop !== before.stop) {
+        before.stop = user.stop;
+        // make order here
+        // marketOrderSell(user.size);
+        process.exit();
+      }
     }
   }
-  // else
-  // if (current.ticker >= Number(user.target)) {
-  //   console.log('simulation -- trade finalized');
-  //   before.id = '';
-  //   set_Double_Sided_Order(current, user);
-  // }
 }
 
 /* 
@@ -147,41 +136,63 @@ export function set_Double_Sided_Order(current, user) {
   * change order between stop loss price and target price
   * when current threshold has been reached
   */
+  console.log('2. DS_TRIGGERED', DS_TRIGGERED);
   console.log('current',current,'user',user);
-  if (current.ticker > user.thresholdPrice && current.ticker <= user.target ) {
+  if (current.ticker > Number(user.thresholdPrice) && current.ticker <= Number(user.target)) {
+    console.log('1');
     if (user.target !== before.target) {
+      console.log('2');
       before.target = user.target;
-      // make order here
-      console.log('order limit as Target Price', chalk.bgYellow.bold.black(user.target));
+
+      gdaxAPI.cancelOrder(before.id).then((order) => {
+        console.log(`SUCCESS ${chalk.red('CANCELLED')}`);
+      }).catch((err) => {
+        console.log('error', err);
+      });
+
+      console.log('order limit as Target Price', chalk.bgYellow.black(user.target));
       limitOrderSell(user.target, user.size);
     }
   } else
-  if (current.ticker > user.target) {
-    if (current.bid >= user.target && current.spread > 0.01) {
+  if (current.ticker > Number(user.target)) {
+    console.log('3');
+    if (current.ask >= Number(user.target) && current.spread > 0.01) {
+      console.log('4');
       user.target = current.ask - .01;
     } else
     if (current.spread <= 0.01) {
+      console.log('5');
       user.target = current.ask;
     }
     if (user.target !== before.target) {
+      console.log('6');
       before.target = user.target;
-      console.log(' order limit as Target Price', chalk.bgWhite.bold.yellow(user.target));
+
+      gdaxAPI.cancelOrder(before.id).then((order) => {
+        console.log(`SUCCESS ${chalk.red('CANCELLED')}`);
+      }).catch((err) => {
+        console.log('error', err);
+      });
+
+      console.log(' order limit as Target Price', chalk.bgYellow.black(user.target));
       limitOrderSell(user.target, user.size);
     }
   } else
-  if ((current.ticker) <= user.thresholdPrice ) {
+  if (current.ticker <= Number(user.thresholdPrice)) {
     // limbo
     // order limit using Stop Loss Price
+    console.log('7');
     if (user.stop !== before.stop) {
+      console.log('8');
       before.stop = user.stop;
-      // make order here
-      console.log(chalk.yellow.underline('Stop Order Executed', chalk.bgWhite.bold.yellow(user.stop)));
+
+      console.log(chalk.yellow.underline('Stop Order Executed', chalk.bgYellow.black(user.stop)));
       stopOrderSell(user.stop,user.size);
-      process.exit();
     }
   } else
-  if (current.ticker === user.target) {
+  if (current.ticker === Number(user.target)) {
     // if order not executed use spread
+    console.log('9');
     (current.spread > 0.01)
     ?
     user.target = current.ask - .01
@@ -189,9 +200,16 @@ export function set_Double_Sided_Order(current, user) {
     user.target = current.ask;
 
     if ( user.target !== before.target) {
+      console.log('10');
       before.target = user.target;
-      // make order here
-      console.log(' order limit as Target Price', chalk.bgWhite.bold.yellow(user.target));
+
+      gdaxAPI.cancelOrder(before.id).then((order) => {
+        console.log(`SUCCESS ${chalk.red('CANCELLED')}`);
+      }).catch((err) => {
+        console.log('error', err);
+      });
+
+      console.log(' order limit as Target Price', chalk.bgYellow.black(user.target));
       limitOrderSell(user.target, user.size);
     }
   }
@@ -340,6 +358,7 @@ function placeOrder(order: PlaceOrderMessage) {
   const msg = chalk.red(`PLACED: Limit ${order.side} order for ${order.size} at ${order.price}`);
   gdaxAPI.placeOrder(order).then((liveOrder: LiveOrder) => {
     console.log('SUCCESS',msg);
+    before.id = liveOrder.id;
   }).catch((err) => {
       console.log('ERROR',err);
   });

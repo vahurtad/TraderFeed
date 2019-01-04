@@ -19,7 +19,6 @@ import {
   set_Limit_Buy,
   set_Limit_Buy_to_Double,
   set_Limit_Sell,
-  triggerHelper,
   LB_helper,
   LS_helper,
   finalized_DS,
@@ -46,7 +45,6 @@ export function loadTick(isMenu, params) {
     const book = new LiveOrderbook(config);
     // register to liveorderbook events
     book.on('data',(msg: StreamMessage) => {
-
       if (msg.type === 'placeOrder') {
         console.log('placeOrder', (msg as PlaceOrderMessage).side);
         console.log((msg as PlaceOrderMessage).price, (msg as PlaceOrderMessage).size);
@@ -54,6 +52,13 @@ export function loadTick(isMenu, params) {
       if (msg.type === 'cancelOrder') {
         console.log('CANCELLED', chalk.bgRedBright.bold(moment((msg as CancelOrderRequestMessage).time).format('MMMM DD h:mm a')));
         console.log((msg as CancelOrderRequestMessage).orderId.length);
+      }
+      if (msg.type === 'unknown') {
+        if (msg.origin.type === 'activate') {
+          console.log('STOP ', chalk.bgRedBright.bold(msg.origin.stop_type));
+          console.log(msg.origin.order_id);
+          before.id = msg.origin.order_id;
+        }
       }
       // https://github.com/coinbase/gdax-tt/issues/110
       // listening to 'data' event, all data remain in memory
@@ -94,8 +99,8 @@ export function loadTick(isMenu, params) {
       }
       switch (isMenu) {
         case '0' : break;
-        case '1' : break;
-        case '2' : break;
+        case '1' : set_Limit_Buy_to_Double(before.message, current,params); break;
+        case '2' : set_Double_Sided_Order(current,params); break;
         case '3' : set_Limit_Buy(current,params); break;
         case '4' : set_Limit_Sell(current,params); break;
         default: console.log('Sorry unable to find menu item. Try again!');
@@ -136,15 +141,6 @@ export function loadTick(isMenu, params) {
     book.on('LiveOrderbook.trade', (msg) => {
       console.log('->> NEW TRADE', msg.side === 'buy' ? chalk.green(msg.price) : chalk.red(msg.price));
       current.ticker = Number(msg.price);
-
-      switch (isMenu) {
-        case '0' : break;
-        case '1' : set_Limit_Buy_to_Double(before.message, current,params); break;
-        case '2' : set_Double_Sided_Order(current,params); break;
-        case '3' : break;
-        case '4' : break;
-        default: console.log('Sorry unable to find menu item. Try again!');
-      }
     });
     book.on('LiveOrderbook.skippedMessage', (details: SkippedMessageEvent) => {
       // On GDAX, this event should never be emitted, but we put it here for completeness
