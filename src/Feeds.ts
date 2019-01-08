@@ -30,7 +30,7 @@ require('dotenv').config();
 /******************************************************************************************
 * FEEDS
 *******************************************************************************************/
-export function loadTick(isMenu, params) {
+export function loadTick(isMenu = '0', params = 0) {
   let currentTicker = ZERO;
   let currentAsk = 0;
   let currentBid = 0;
@@ -97,6 +97,7 @@ export function loadTick(isMenu, params) {
         spread.ticker = Number(currentTicker);
         console.log(`${chalk.green('💰 ')} ${currentTicker.toFixed(2)} ${chalk.green(' 💰')} `);
       }
+
       switch (isMenu) {
         case '0' : break;
         case '1' : set_Limit_Buy_to_Double(before.message, current,params); break;

@@ -7,7 +7,6 @@ import { PlaceOrderMessage } from 'gdax-tt/build/src/core/Messages';
 import { LiveOrder } from 'gdax-tt/build/src/lib';
 import { loadTick } from './Feeds';
 import {
-  getAndPrintOrderbook,
   printBalances,
   hasAuth,
   getAndPrintTickers,
@@ -15,6 +14,7 @@ import {
   get_Threshold_Price,
   getFlooredFixed } from './helpers';
 import { gdaxAPI } from './configs';
+import { constants } from 'http2';
 require('dotenv').config();
 
 // const ctx = new chalk.constructor({level: 3});
@@ -57,7 +57,7 @@ export function finalized_LBtoDS(message, orderIdToFulfill, current, user) {
   // wait for order message OR check funds
   console.log('orderIdToFulfill', orderIdToFulfill);
   console.log('message',message);
-  if (message.type === 'tradeFinalized' && message.reason === 'filled') {
+  if (message.type === 'tradeFinalized' && message.reason === 'canceled') {
     console.log(message.id, orderIdToFulfill);
     if (message.id === orderIdToFulfill) {
       console.log('Entry Price Executed', user.entry);
@@ -95,6 +95,7 @@ export function set_Limit_Buy_to_Double(message,current, user) {
   }
 }
 
+// TODO:  check threshold price equation that does not use user.entry
 /* 
 * gets user input
 */
@@ -103,6 +104,7 @@ function get_Double_Sided() {
   inquirer.prompt(prompt.doubleSidedPrompt).then((params) => {
     return get_Threshold_Price(params);
   }).then((params) => {
+    console.log(params);
     return get_Asset_Size(params);
   }).then((params) => {
     loadTick('2',params);
@@ -132,6 +134,7 @@ export function finalized_DS(message, orderIdToFulfill, current, user) {
 export function set_Double_Sided_Order(current, user) {
   const mytarget = user.target;
   console.log('--------- DOUBLE SIDED ORDER -------');
+  console.log('ID',before.id);
   /*
   * change order between stop loss price and target price
   * when current threshold has been reached
@@ -236,24 +239,15 @@ function get_Limit_Buy_Change() {
 }
 
 export function LB_helper(message,current, user) {
-  console.log("​checking -> message.id", message.id);
-  console.log("​checking -> before.id", before.id);
   if (current.bid !== before.bid) {
     before.bid = current.bid;
-    console.log('>>making new order<<');
-		console.log("​exportfunctionLB_helper -> message.id", message.id);
-    console.log("​exportfunctionLB_helper -> before.id", before.id);
+    gdaxAPI.cancelOrder(before.id).then((order) => {
+      console.log(`SUCCESS ${chalk.red(`CANCELLED`)}`);
+    }).catch((err) => {
+      console.log(chalk.red('error cancelling order'));
+      process.exit();
+    });
     limitOrderBuy(before.bid.toString(), user.size);
-    console.log("​exportfunctionLB_helper -> message.id", message.id);
-    // gdaxAPI.cancelOrder(before.id).then((order) => {
-    //   console.log(`SUCCESS ${chalk.red('CANCELLED',before.id)}`);
-    // }).catch((err) => {
-    //   console.log('error', err);
-    // });
-    
-    before.id = message.id;
-    console.log("​exportfunctionLB_helper -> before.id", before.id);
-    console.log('-------------');
   }
 }
 
@@ -264,8 +258,6 @@ export function set_Limit_Buy(current, user) {
   */
   if (before.bid !== Number(user.entry)) {
     before.bid = Number(user.entry);
-    console.log(before.bid);
-    console.log("​exportfunctionset_Limit_Buy -> before.bid", before.bid);
     limitOrderBuy(before.bid.toString(), user.size);
   }
 }
@@ -281,36 +273,32 @@ function get_Limit_Sell_Change() {
   }).then((v) => {
     const [ask,params] = v;
     params.entry = ask;
-    return get_Asset_Size(params, 'buy');
-  }).then((params) => {
-    params.size = getFlooredFixed((Number(params.size) / Number(params.entry)),8);
-    return params;
+    return get_Asset_Size(params);
   }).then((params) => {
     loadTick('4',params);
   });
 }
 
 export function LS_helper(message,current, user) {
-  if (current.bid !== before.bid) {
+  if (current.ask !== before.ask) {
+    before.ask = current.ask;
     gdaxAPI.cancelOrder(before.id).then((order) => {
-      console.log(`SUCCESS ${chalk.red('CANCELLED')}`);
+      console.log(`SUCCESS ${chalk.red(`CANCELLED`)}`);
     }).catch((err) => {
-      console.log('error', err);
+      console.log(chalk.red('error cancelling order'));
+      process.exit();
     });
-    before.bid = current.bid;
-    limitOrderSell(before.bid.toString(), user.size);
-  } else {
-    console.log('no change', current.bid);
+    limitOrderSell(before.ask.toString(), user.size);
   }
 }
 // executes user order
 export function set_Limit_Sell(current, user) {
   // sell at best ask
   // higher the better
-  if (before.bid !== Number(user.entry)) {
-    before.bid = Number(user.entry);
-    console.log(before.bid);
-    limitOrderSell(before.bid.toString(), user.size);
+  if (before.ask !== Number(user.entry)) {
+    before.ask = Number(user.entry);
+    console.log(before.ask);
+    limitOrderSell(before.ask.toString(), user.size);
   }
 }
 
@@ -359,6 +347,7 @@ function placeOrder(order: PlaceOrderMessage) {
   gdaxAPI.placeOrder(order).then((liveOrder: LiveOrder) => {
     console.log('SUCCESS',msg);
     before.id = liveOrder.id;
+    console.log(before.id, '<<');
   }).catch((err) => {
       console.log('ERROR',err);
   });
@@ -456,7 +445,7 @@ inquirer.prompt(prompt.feedQ).then( (ans) => {
       case 'Limit Buy - Best Bid': get_Limit_Buy_Change(); break;
       case 'Limit Sell - Best Ask': get_Limit_Sell_Change(); break;
       case 'Cancel All Orders': cancelOrders(); break;
-      case 'Watch':  loadTick('0', 0); break;
+      case 'Watch':  loadTick(); break;
       case 'exit': console.log(chalk.cyan('Good Bye 👋\n')); process.exit(); break;
       default:  console.log('Sorry, no menu item for that');
     }
