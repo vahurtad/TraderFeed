@@ -56,10 +56,12 @@ function get_Limit_Buy_to_DS() {
 export function finalized_LBtoDS(message, orderIdToFulfill, current, user) {
   // wait for order message OR check funds
   console.log('orderIdToFulfill', orderIdToFulfill);
-  console.log('message',message);
-  if (message.type === 'tradeFinalized' && message.reason === 'canceled') {
+  if (message.type === 'tradeFinalized' && message.reason === 'filled') {
     console.log(message.id, orderIdToFulfill);
     if (message.id === orderIdToFulfill) {
+      if (DS_TRIGGERED) {
+        process.exit();
+      }
       console.log('Entry Price Executed', user.entry);
       set_Double_Sided_Order(current, user);
       DS_TRIGGERED = true;
@@ -140,21 +142,25 @@ export function set_Double_Sided_Order(current, user) {
   * when current threshold has been reached
   */
   console.log('2. DS_TRIGGERED', DS_TRIGGERED);
-  console.log('current',current,'user',user);
+  console.log('current',current,'user',user, 'before', before);
   if (current.ticker > Number(user.thresholdPrice) && current.ticker <= Number(user.target)) {
     console.log('1');
     if (user.target !== before.target) {
       console.log('2');
+      before.stop = 'switch';
       before.target = user.target;
-
-      gdaxAPI.cancelOrder(before.id).then((order) => {
-        console.log(`SUCCESS ${chalk.red('CANCELLED')}`);
-      }).catch((err) => {
-        console.log('error', err);
-      });
 
       console.log('order limit as Target Price', chalk.bgYellow.black(user.target));
       limitOrderSell(user.target, user.size);
+    } else
+    if (before.target === 'switch') {
+      gdaxAPI.cancelOrder(before.id).then((order) => {
+        console.log(`SUCCESS ${chalk.red('CANCELLED')}`);
+        console.log(' order limit as Target Price', chalk.bgYellow.black(user.target));
+        limitOrderSell(user.target, user.size);
+      }).catch((err) => {
+        console.log('error', err);
+      });
     }
   } else
   if (current.ticker > Number(user.target)) {
@@ -169,16 +175,20 @@ export function set_Double_Sided_Order(current, user) {
     }
     if (user.target !== before.target) {
       console.log('6');
+      before.stop = 'switch';
       before.target = user.target;
-
-      gdaxAPI.cancelOrder(before.id).then((order) => {
-        console.log(`SUCCESS ${chalk.red('CANCELLED')}`);
-      }).catch((err) => {
-        console.log('error', err);
-      });
 
       console.log(' order limit as Target Price', chalk.bgYellow.black(user.target));
       limitOrderSell(user.target, user.size);
+    } else
+    if (before.target === 'switch') {
+      gdaxAPI.cancelOrder(before.id).then((order) => {
+        console.log(`SUCCESS ${chalk.red('CANCELLED')}`);
+        console.log(' order limit as Target Price', chalk.bgYellow.black(user.target));
+        limitOrderSell(user.target, user.size);
+      }).catch((err) => {
+        console.log('error', err);
+      });
     }
   } else
   if (current.ticker <= Number(user.thresholdPrice)) {
@@ -187,10 +197,20 @@ export function set_Double_Sided_Order(current, user) {
     console.log('7');
     if (user.stop !== before.stop) {
       console.log('8');
+      before.target = 'switch';
       before.stop = user.stop;
 
-      console.log(chalk.yellow.underline('Stop Order Executed', chalk.bgYellow.black(user.stop)));
+      console.log(chalk.yellow.underline('Stop Order Placed', chalk.bgYellow.black(user.stop)));
       stopOrderSell(user.stop,user.size);
+    } else
+    if (before.stop === 'switch') {
+      gdaxAPI.cancelOrder(before.id).then((order) => {
+        console.log(`SUCCESS ${chalk.red('CANCELLED')}`);
+        console.log(chalk.yellow.underline('Stop Order Placed', chalk.bgYellow.black(user.stop)));
+        stopOrderSell(user.stop,user.size);
+      }).catch((err) => {
+        console.log('error', err);
+      });
     }
   } else
   if (current.ticker === Number(user.target)) {
@@ -204,16 +224,21 @@ export function set_Double_Sided_Order(current, user) {
 
     if ( user.target !== before.target) {
       console.log('10');
+      before.stop = 'switch';
       before.target = user.target;
-
-      gdaxAPI.cancelOrder(before.id).then((order) => {
-        console.log(`SUCCESS ${chalk.red('CANCELLED')}`);
-      }).catch((err) => {
-        console.log('error', err);
-      });
 
       console.log(' order limit as Target Price', chalk.bgYellow.black(user.target));
       limitOrderSell(user.target, user.size);
+
+    } else
+    if (before.target === 'switch') {
+      gdaxAPI.cancelOrder(before.id).then((order) => {
+        console.log(`SUCCESS ${chalk.red('CANCELLED')}`);
+        console.log(' order limit as Target Price', chalk.bgYellow.black(user.target));
+        limitOrderSell(user.target, user.size);
+      }).catch((err) => {
+        console.log('error', err);
+      });
     }
   }
 }
