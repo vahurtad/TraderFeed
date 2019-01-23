@@ -1,5 +1,5 @@
 Trader helper built on top of [GDAX TRADING TOOLKIT](https://github.com/coinbase/gdax-tt)
-
+latest : [TradeFeed](https://github.com/vahurtad/TraderFeed/tree/test)
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/vahurtad/TraderFeed.svg?style=flat-square)](https://greenkeeper.io/)
 
