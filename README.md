@@ -1,6 +1,8 @@
 Trader helper built on top of [GDAX TRADING TOOLKIT](https://github.com/coinbase/gdax-tt)
 
-**changes were made to gdax-tt source for new triggers**
+**changes were made to gdax-tt source for new triggers**  
+
+    [gdax-tt edit](https://github.com/vahurtad/gdax-tt)
 
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/vahurtad/TraderFeed.svg?style=flat-square)](https://greenkeeper.io/)
