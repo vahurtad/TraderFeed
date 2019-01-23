@@ -16,5 +16,5 @@ export const before = {
   price: '',
   entry: '',
   message : {},
-  id: ''
+  id: '',
 };

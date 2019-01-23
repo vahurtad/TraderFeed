@@ -23,7 +23,7 @@ import {
   LS_helper,
   finalized_DS,
   finalized_LBtoDS } from './trader';
-import { getAndPrintOrderbook } from './helpers';
+import { getAndPrintOrderbook, getOrderByID } from './helpers';
 import { logger, gdaxConfig } from './configs';
 require('dotenv').config();
 

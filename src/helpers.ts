@@ -66,7 +66,7 @@ export function get_Threshold_Price(params) {
   console.log(chalk.bgWhite.red('Threshold Price'), chalk.red(params.thresholdPrice));
   return params;
 }
-
+// get user assets
 export function get_Asset_Size(params, type = 'sell') {
   params.size = params.size.replace(/\s/g,'');
   if (params.size === 'all' || params.size === '' || params.size.length === 0) {
@@ -112,5 +112,15 @@ export function printBalances() {
         console.log(`${total[t].coin}\tbalance: ${total[t].funds.balance.toFixed(7)} -- available: ${total[t].funds.available.toFixed(7)}`);
       }
     }
+  });
+}
+
+export function getOrderByID(orderId) {
+  const balanceANDfunds = [];
+  return gdaxAPI.loadOrder(orderId).then((order) => {
+    console.log(order);
+    return order.extra.filled_size;
+  }).catch((err) => {
+    console.log('error', err);
   });
 }
