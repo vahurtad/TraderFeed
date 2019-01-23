@@ -20,7 +20,6 @@ Trader helper built on top of [GDAX TRADING TOOLKIT](https://github.com/coinbase
 
 ## Run
  Run with the command
-    > ts-node trader
 
     ts-node trader
 ## Necessary
