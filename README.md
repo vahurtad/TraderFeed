@@ -18,10 +18,12 @@ changes were made to gdax-tt source for new triggers
 # GDAX Trading toolkit
 [GDAX TT ](https://github.com/coinbase/gdax-tt)
 
+# GDAX TT API Reference
+[https://coinbase.github.io/gdax-tt/apiref/index.html](https://coinbase.github.io/gdax-tt/apiref/index.html)
+
 ## Run
  Run with the command
-    > ts-node trader
-
+    
     ts-node trader
 ## Necessary
     > npm i -g --vs2015 windows-build-tools

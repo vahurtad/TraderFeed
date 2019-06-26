@@ -37,6 +37,7 @@ export const feedQ = [{
   name: 'choice',
   message: 'Which?',
   choices: [
+    'Test',
     'Account',
     'Limit Buy + DSO',
     'Double Sided Order',

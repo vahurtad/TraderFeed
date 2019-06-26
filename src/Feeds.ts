@@ -76,6 +76,7 @@ export function loadTick(isMenu = '0', params = 0) {
         case '2': finalized_DS(message, before.id , current, params); break;
         case '3': break;
         case '4': break;
+        case '5': break;
         default: console.log('Sorry unable to find menu item. Try again!');
       }
     });
@@ -104,6 +105,7 @@ export function loadTick(isMenu = '0', params = 0) {
         case '2' : set_Double_Sided_Order(current,params); break;
         case '3' : set_Limit_Buy(current,params); break;
         case '4' : set_Limit_Sell(current,params); break;
+        case '5': break;
         default: console.log('Sorry unable to find menu item. Try again!');
       }
     });
@@ -135,6 +137,7 @@ export function loadTick(isMenu = '0', params = 0) {
         case '2' : break;
         case '3' : LB_helper(message, current,params); break;
         case '4' : LS_helper(before.message,current,params); break;
+        case '5': break;
         default: console.log('Sorry unable to find menu item. Try again!');
       }
 

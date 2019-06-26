@@ -152,12 +152,10 @@ export function set_Double_Sided_Order(current, user) {
   * change order between stop loss price and target price
   * when current threshold has been reached
   */
-  console.log('2. DS_TRIGGERED', DS_TRIGGERED);
+  console.log('2. DS_TRIGGERED', DS_TRIGGERED, 'SWITCH', SWITCH);
   console.log('current >> ',current,'user >>',user , 'before >>', before);
   if (current.ticker > Number(user.thresholdPrice) && current.ticker <= Number(user.target)) {
-    console.log('1');
     if (user.target !== before.target && !SWITCH) {
-      console.log('2');
       SWITCH = true;
       before.target = user.target;
 
@@ -175,17 +173,13 @@ export function set_Double_Sided_Order(current, user) {
     }
   } else
   if (current.ticker > Number(user.target)) {
-    console.log('3');
     if (current.ask >= Number(user.target) && current.spread > 0.01) {
-      console.log('4');
       user.target = current.ask - .01;
     } else
     if (current.spread <= 0.01) {
-      console.log('5');
       user.target = current.ask;
     }
     if (user.target !== before.target && !SWITCH) {
-      console.log('6');
       SWITCH = true;
       before.target = user.target;
 
@@ -205,9 +199,7 @@ export function set_Double_Sided_Order(current, user) {
   if (current.ticker <= Number(user.thresholdPrice)) {
     // limbo
     // order limit using Stop Loss Price
-    console.log('7', 'waiting to switch', SWITCH);
     if (user.stop !== before.stop && !SWITCH) {
-      console.log('8');
       SWITCH = true;
       before.stop = user.stop;
 
@@ -226,7 +218,6 @@ export function set_Double_Sided_Order(current, user) {
   } else
   if (current.ticker === Number(user.target)) {
     // if order not executed use spread
-    console.log('9');
     (current.spread > 0.01)
     ?
     user.target = current.ask - .01
@@ -234,7 +225,6 @@ export function set_Double_Sided_Order(current, user) {
     user.target = current.ask;
 
     if ( user.target !== before.target && !SWITCH) {
-      console.log('10');
       SWITCH = true;
       before.target = user.target;
 
@@ -475,6 +465,7 @@ function stopOrderSell(price: string, size: string) {
 inquirer.prompt(prompt.feedQ).then( (ans) => {
   if (hasAuth()) {
     switch (ans.choice) {
+      case 'Test': loadTick('5'); break;
       case 'Account' : gotoAccountMenu(); break;
       case 'Limit Buy + DSO': get_Limit_Buy_to_DS(); break;
       case 'Double Sided Order': get_Double_Sided(); break;
