@@ -45,6 +45,6 @@ A small challenge for me was learning TypeScript while also learning what the co
    [gdax-tt edit](https://github.com/vahurtad/gdax-tt)
 
 #### Menu
-![menu image1](images\Menu.JPG)
+![menu image1](images/Menu.JPG)
 
-![menu image2](images\DSO-Menu.JPG)
+![menu image2](images/DSO-Menu.JPG)
