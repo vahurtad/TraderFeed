@@ -21,7 +21,7 @@ Trader helper built on top of [GDAX TRADING TOOLKIT](https://github.com/coinbase
 [GDAX TT ](https://github.com/coinbase/gdax-tt)
 
 # GDAX TT API Reference
-[https://coinbase.github.io/gdax-tt/apiref/index.html](https://coinbase.github.io/gdax-tt/apiref/index.html)
+[GDAX API](https://coinbase.github.io/gdax-tt/apiref/index.html)
 
 ## Run
  Run with the command
