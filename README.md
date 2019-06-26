@@ -1,6 +1,9 @@
 Trader helper built on top of [GDAX TRADING TOOLKIT](https://github.com/coinbase/gdax-tt)
 
-latest branch: [TradeFeed/test](https://github.com/vahurtad/TraderFeed/tree/test)
+**changes were made to gdax-tt source for new triggers**  
+
+   [gdax-tt edit](https://github.com/vahurtad/gdax-tt)
+
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/vahurtad/TraderFeed.svg?style=flat-square)](https://greenkeeper.io/)
 
@@ -17,9 +20,13 @@ latest branch: [TradeFeed/test](https://github.com/vahurtad/TraderFeed/tree/test
 # GDAX Trading toolkit
 [GDAX TT ](https://github.com/coinbase/gdax-tt)
 
+# GDAX TT API Reference
+[https://coinbase.github.io/gdax-tt/apiref/index.html](https://coinbase.github.io/gdax-tt/apiref/index.html)
+
 ## Run
  Run with the command
-
+    
     ts-node trader
 ## Necessary
     > npm i -g --vs2015 windows-build-tools
+   [gdax-tt edit](https://github.com/vahurtad/gdax-tt)
